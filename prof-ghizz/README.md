@@ -38,3 +38,9 @@ annotazione una riga di 10 celle
 
 https://firebase.google.com/
 https://console.cloud.google.com/storage/browser (attivazione storage)
+
+node_modules/
+dist/
+/.angular
+/.idea
+*.log
