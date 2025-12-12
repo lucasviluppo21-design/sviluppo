@@ -2,15 +2,12 @@
   <div class="logo">Prof Ghizz</div>
 
   <nav class="header-actions">
-    <!-- Mostra stato se già installata/avviata in standalone -->
     <span class="app-state" *ngIf="isStandalone">Installata</span>
 
-    <!-- Link sempre visibile per aprire nel browser -->
     <a class="open-browser" href="https://lucasviluppo21-design.github.io/sviluppo/" target="_self" rel="noopener">
       Apri nel browser
     </a>
 
-    <!-- Bottone installazione visibile solo quando il prompt è disponibile -->
     <button
       *ngIf="canInstall"
       class="install-btn"

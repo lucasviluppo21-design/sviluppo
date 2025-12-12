@@ -11,51 +11,60 @@ export class HeaderComponent implements OnInit, OnDestroy {
   canInstall = false;
   isStandalone = false;
 
-  private beforeInstallHandler = (e: Event) => {
-    e.preventDefault();
-    this.deferredPrompt = e as any;
-    // Aggiorna stato UI dentro Angular
-    this.zone.run(() => {
-      this.canInstall = true;
-    });
-  };
-
   constructor(private zone: NgZone) {}
 
   ngOnInit(): void {
-    // Rileva se l'app è avviata in standalone (già installata)
-    this.isStandalone = window.matchMedia('(display-mode: standalone)').matches
-      || (navigator as any).standalone === true;
+    // Detect standalone (già installata/avviata)
+    this.isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
 
-    // Ascolta l'evento beforeinstallprompt
-    window.addEventListener('beforeinstallprompt', this.beforeInstallHandler);
+    // Fallback: se il browser supporta service worker + manifest, mostra link (non prompt)
+    const supportsSW = 'serviceWorker' in navigator;
+    const supportsManifest = !!document.querySelector('link[rel="manifest"]');
+    if (supportsSW && supportsManifest && !this.isStandalone) {
+      // Non garantisce il prompt, ma consente UI
+      this.canInstall = false; // verrà true solo con beforeinstallprompt
+      console.log('[PWA] supporto rilevato, in attesa di beforeinstallprompt…');
+    }
 
-    // Se la pagina è ricaricata dopo installazione, nascondi il bottone
+    // Evento beforeinstallprompt
+    const handler = (e: Event) => {
+      e.preventDefault();
+      this.deferredPrompt = e as any;
+      this.zone.run(() => {
+        this.canInstall = true;
+      });
+      console.log('[PWA] beforeinstallprompt ricevuto, canInstall=true');
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    // App installed
     window.addEventListener('appinstalled', () => {
       this.zone.run(() => {
         this.canInstall = false;
         this.isStandalone = true;
       });
       this.deferredPrompt = null;
+      console.log('[PWA] appinstalled: installazione completata');
     });
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('beforeinstallprompt', this.beforeInstallHandler);
+    // Non rimuovo i listener per semplicità, se lo fai, tieni una reference al handler
   }
 
   async installApp(): Promise<void> {
-    if (!this.deferredPrompt) return;
-
+    if (!this.deferredPrompt) {
+      alert('Installazione non disponibile ora. Riprova dopo aver ricaricato la pagina.');
+      return;
+    }
     this.canInstall = false;
-    // Mostra il prompt
     this.deferredPrompt.prompt();
     try {
       const choice = await this.deferredPrompt.userChoice;
-      // choice.outcome: 'accepted' | 'dismissed'
-      // In ogni caso, resetta il prompt
-      this.deferredPrompt = null;
-    } catch {
+      console.log('[PWA] userChoice:', choice);
+    } finally {
       this.deferredPrompt = null;
     }
   }
