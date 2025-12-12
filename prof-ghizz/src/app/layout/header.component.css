@@ -1,0 +1,5 @@
+:host { display: block; }
+.app-header{height:64px;display:flex;align-items:center;justify-content:flex-start;padding:0 20px;background:#fff;border-bottom:1px solid #e6edf3}
+.app-header .logo{font-weight:800;color:#0f2a63;font-size:1.1rem}
+.app-header{position:relative;z-index:1100;pointer-events:auto}
+

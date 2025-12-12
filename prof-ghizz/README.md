@@ -26,14 +26,15 @@ la build di Angular CLI.
 
 NOTE PER ENZO SVILUPPI:
 
-- eliminare dalla stampa nelle note utente la suddivisione in celle
-- nella gestione delle stampe creare un nuovo template vedi mail enzo 
-- nella pagina di dettaglio utente ho isnerito la data scadenza abbonamento palestra , su cui poi andremo a costruire una pagina 
-  in cui visualizziamo tutte le scadenze delle iscrizioni a cui inviare una mail all'utente o um msg su cell nela caso in cui scade.
+0 - funzionalità anteprima pdf  
+1 - funzionalità di stampa scheda
+2 - ridotto la dimensione delle label min serc, recupero e ripetizioni
+3 - ho aggiunto la paginazione alla schede deglie esercizi 
+4 - ho aggiunto il filtro per cercare le catergorie quando si inserisce l'esercizio in modo da non avere un menu con molti elementi 
+5 - ho associato la scheda all'utente nel dettaglio anagrafica 
 
 
 annotazione una riga di 10 celle 
 
 https://firebase.google.com/
-
 https://console.cloud.google.com/storage/browser (attivazione storage)

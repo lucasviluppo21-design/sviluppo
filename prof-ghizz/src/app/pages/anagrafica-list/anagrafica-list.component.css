@@ -1,0 +1,61 @@
+.anagrafica-list .list {
+  margin-top: 12px;
+}
+.anagrafica-list .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.anagrafica-list .name {
+  font-weight: 600;
+}
+.anagrafica-list .email {
+  color: var(--muted);
+  font-size: 13px;
+}
+.btn.small {
+  padding: 6px 8px;
+}
+.anagrafica-list label {
+  font-weight: 400;
+  font-size: 15px;
+}
+.anagrafica-list input[type="radio"],
+.anagrafica-list select.tessera-combo {
+  accent-color: #1742b0;
+  margin-right: 6px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* Per il combo Tessera */
+.anagrafica-list .tessera-combo {
+  border-radius: 6px;
+  border: 1px solid #b9c4d4;
+  padding: 5px 9px;
+  font-size: 15px;
+  background: #fff;
+  color: #1742b0;
+  font-weight: 500;
+  min-width: 75px;
+  margin-left: 8px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Migliora allineamento label e combobox */
+.anagrafica-list .filter-bar {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.anagrafica-list .filter-bar label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

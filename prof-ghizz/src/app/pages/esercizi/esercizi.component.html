@@ -1,0 +1,435 @@
+<div class="esercizi-page">
+  <div class="esercizi-layout">
+
+    <!-- ===================== ESERCIZI ===================== -->
+    <div class="esercizi-card">
+      <div class="section-header">
+        <span class="section-title">ESERCIZI</span>
+        <button class="top-btn" type="button" aria-label="Aggiungi esercizio" (click)="openExerciseModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24">
+            <rect x="2" y="9.5" width="3" height="5" rx="1.2" fill="#2563eb"></rect>
+            <rect x="19" y="9.5" width="3" height="5" rx="1.2" fill="#2563eb"></rect>
+            <rect x="6" y="11" width="12" height="2" rx="1" fill="#2563eb"></rect>
+            <rect x="8" y="10" width="8" height="4" rx="1.6" fill="#e7effd"></rect>
+          </svg>
+        </button>
+      </div>
+      <div class="section-divider"></div>
+
+      <div class="search-bar-wrapper">
+        <label class="search-bar" for="exercise-search">
+          <input id="exercise-search"
+                 [(ngModel)]="exerciseSearch"
+                 type="text"
+                 aria-label="Cerca esercizi"
+                 autocomplete="off"
+                 placeholder="Cerca esercizi..." />
+        </label>
+      </div>
+
+      <div class="exercise-list">
+        <div *ngFor="let exercise of filteredExercisesLimited" class="card-item">
+          <div class="card-img-wrap">
+            <img *ngIf="exercise.image" [src]="exercise.image" [alt]="exercise.name">
+            <div *ngIf="!exercise.image" class="exercise-placeholder">
+              <svg width="64" height="64" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#cfe6fd"></circle>
+                <rect x="8" y="10" width="8" height="4" rx="1.5" fill="#83b4fa"></rect>
+                <rect x="4" y="11.5" width="3" height="3" rx="1.2" fill="#2563eb"></rect>
+                <rect x="17" y="11.5" width="3" height="3" rx="1.2" fill="#2563eb"></rect>
+              </svg>
+            </div>
+          </div>
+          <div class="exercise-text">
+            <div class="exercise-name">{{ exercise.name }}</div>
+            <div class="exercise-category">{{ exercise.category }}</div>
+          </div>
+            <button class="exercise-detail-btn"
+                    type="button"
+                    [routerLink]="['/esercizi', exercise.id]"
+                    aria-label="Dettaglio esercizio {{exercise.name}}">
+              Dettaglio
+            </button>
+        </div>
+
+        <div *ngIf="filteredExercisesLimited.length === 0" class="exercise-empty-info">
+          Nessun esercizio presente
+        </div>
+
+        <button *ngIf="exercises.length > 5"
+                class="more-btn"
+                type="button"
+                (click)="openAllExercisesModal()">
+          Mostra tutti
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== CATEGORIE ===================== -->
+    <div class="categorie-card">
+      <div class="section-header">
+        <span class="section-title">CATEGORIE</span>
+        <button class="top-btn" type="button" aria-label="Aggiungi categoria" (click)="openCategoryModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24">
+            <path d="M3 12.5 L12 21.2 Q12.6 21.8 13.3 21.25 L21.25 13.3 Q21.8 12.6 21.2 12 L12.5 3 Q12.05 2.55 11.45 3.1 L3.1 11.45 Q2.55 12.05 3 12.5Z"
+                  fill="#2563eb" stroke="#1857a7" stroke-width="1"></path>
+            <circle cx="8" cy="8" r="2" fill="#fff" stroke="#2563eb" stroke-width="1"></circle>
+          </svg>
+        </button>
+      </div>
+      <div class="section-divider"></div>
+
+      <div class="search-bar-wrapper">
+        <label class="search-bar" for="category-search">
+          <input id="category-search"
+                 [(ngModel)]="categorySearch"
+                 type="text"
+                 aria-label="Cerca categorie"
+                 autocomplete="off"
+                 placeholder="Cerca categorie..." />
+        </label>
+      </div>
+
+      <div class="category-list">
+        <div *ngFor="let category of filteredCategoriesLimited" class="card-item category-row">
+          <div class="card-img-wrap">
+            <img *ngIf="category.image" [src]="category.image" [alt]="category.name">
+            <div *ngIf="!category.image" class="category-placeholder">
+              <svg width="64" height="64" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#e5fbee"></circle>
+                <path d="M9 15l3-6 3 6" stroke="#22c16b" stroke-width="2" fill="none"></path>
+              </svg>
+            </div>
+            <button class="category-edit-img-btn"
+                    type="button"
+                    (click)="openEditCategoryModal(category)"
+                    aria-label="Modifica immagine categoria {{category.name}}">
+              <svg width="22" height="22" viewBox="0 0 24 24">
+                <path d="M14.06 5.94a2.5 2.5 0 013.54 3.54l-8.585 8.585-4.243.707.707-4.243z"
+                      fill="none" stroke="#2563eb" stroke-width="2"></path>
+                <circle cx="17.5" cy="6.5" r="1.5" fill="#83b4fa" stroke="#2563eb" stroke-width="1"></circle>
+              </svg>
+            </button>
+          </div>
+
+          <div class="category-text" (click)="openEditCategoryModal(category)">
+            <div class="category-name">{{ category.name }}</div>
+          </div>
+
+          <div class="category-controls-destra">
+            <button type="button"
+                    class="category-x-btn2"
+                    (click)="confirmRemoveCategory(category)"
+                    title="Elimina categoria"
+                    aria-label="Elimina categoria {{category.name}}">
+              ×
+            </button>
+            <label class="category-checkbox-wrap" title="Seleziona categoria per filtrare esercizi">
+              <input type="checkbox"
+                     [checked]="category.selected"
+                     (change)="onCategoryToggle(category, $event.target.checked)" />
+              <span class="category-checkbox"></span>
+            </label>
+          </div>
+        </div>
+
+        <div *ngIf="filteredCategoriesLimited.length === 0" class="exercise-empty-info">
+          Nessuna categoria trovata
+        </div>
+
+        <div class="category-actions-bottom" *ngIf="categories.length">
+          <button type="button"
+                  class="reset-categories-btn"
+                  (click)="resetCategorySelections()">
+            Azzera
+          </button>
+          <button type="button"
+                  class="toggle-categories-btn"
+                  (click)="openAllCategoriesModal()"
+                  *ngIf="categories.length > 5">
+            Mostra tutte
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE GRIGLIA ESERCIZI ===================== -->
+  <div class="esercizi-modal-backdrop" *ngIf="showAllExercisesModal">
+    <div class="esercizi-modal esercizi-grid-modal">
+      <div class="grid-modal-header">
+        <h3 class="grid-modal-title">
+          Tutti gli esercizi
+          <span *ngIf="selectedCategoryNames.length" class="grid-filter-tag">
+            Categoria: {{ selectedCategoryNames[0] }}
+          </span>
+        </h3>
+        <button type="button" class="grid-close-btn" aria-label="Chiudi" (click)="closeAllExercisesModal()">×</button>
+      </div>
+
+      <div class="search-bar-wrapper modal-search-inline">
+        <label class="search-bar" for="exercise-search-modal">
+          <input id="exercise-search-modal"
+                 [(ngModel)]="exerciseSearch"
+                 type="text"
+                 aria-label="Cerca esercizi nella griglia"
+                 autocomplete="off"
+                 placeholder="Cerca..." />
+        </label>
+      </div>
+
+      <div class="exercise-grid">
+        <div *ngFor="let exercise of allExercisesForModal" class="exercise-grid-card">
+          <div class="grid-img">
+            <img *ngIf="exercise.image" [src]="exercise.image" [alt]="exercise.name">
+            <div *ngIf="!exercise.image" class="grid-placeholder">
+              <svg width="48" height="48" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#d9ecfd"></circle>
+                <rect x="8" y="10" width="8" height="4" rx="1.5" fill="#83b4fa"></rect>
+              </svg>
+            </div>
+          </div>
+          <div class="grid-info">
+            <div class="grid-name">{{ exercise.name }}</div>
+            <div class="grid-cat">{{ exercise.category }}</div>
+          </div>
+          <a class="grid-detail-link"
+             [routerLink]="['/esercizi', exercise.id]"
+             aria-label="Dettaglio esercizio {{exercise.name}}">
+            Dettaglio
+          </a>
+        </div>
+        <div *ngIf="allExercisesForModal.length === 0" class="grid-empty">Nessun esercizio trovato</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE GRIGLIA CATEGORIE ===================== -->
+  <div class="esercizi-modal-backdrop" *ngIf="showAllCategoriesModal">
+    <div class="esercizi-modal categorie-grid-modal">
+      <div class="grid-modal-header">
+        <h3 class="grid-modal-title">
+          Tutte le categorie
+        </h3>
+        <button type="button" class="grid-close-btn" aria-label="Chiudi" (click)="closeAllCategoriesModal()">×</button>
+      </div>
+
+      <div class="search-bar-wrapper modal-search-inline">
+        <label class="search-bar" for="category-search-modal">
+          <input id="category-search-modal"
+                 [(ngModel)]="categorySearch"
+                 type="text"
+                 aria-label="Cerca categorie nella griglia"
+                 autocomplete="off"
+                 placeholder="Cerca..." />
+        </label>
+      </div>
+
+      <div class="category-grid">
+        <div *ngFor="let category of allCategoriesForModal" class="category-grid-card">
+          <div class="grid-cat-img">
+            <img *ngIf="category.image" [src]="category.image" [alt]="category.name">
+            <div *ngIf="!category.image" class="grid-cat-placeholder">
+              <svg width="46" height="46" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#e0f7eb"></circle>
+                <path d="M9 15l3-6 3 6" stroke="#18c879" stroke-width="2" fill="none"></path>
+              </svg>
+            </div>
+            <button class="grid-cat-edit-btn"
+                    type="button"
+                    aria-label="Modifica categoria {{category.name}}"
+                    (click)="openEditCategoryModal(category)">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path d="M14.06 5.94a2.5 2.5 0 013.54 3.54l-8.585 8.585-4.243.707.707-4.243z"
+                      fill="none" stroke="#2563eb" stroke-width="2"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="grid-cat-info">
+            <div class="grid-cat-name">{{ category.name }}</div>
+          </div>
+          <div class="grid-cat-actions">
+            <button class="grid-cat-delete-btn"
+                    type="button"
+                    aria-label="Elimina categoria {{category.name}}"
+                    (click)="confirmRemoveCategory(category)">×</button>
+            <label class="grid-cat-checkbox-wrap" title="Seleziona categoria per filtrare esercizi">
+              <input type="checkbox"
+                     [checked]="category.selected"
+                     (change)="onCategoryToggle(category, $event.target.checked)" />
+              <span class="grid-cat-checkbox"></span>
+            </label>
+          </div>
+        </div>
+        <div *ngIf="allCategoriesForModal.length === 0" class="grid-empty">Nessuna categoria trovata</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE ELIMINA CATEGORIA ===================== -->
+  <div *ngIf="showDeleteCategoryModal" class="esercizi-modal-backdrop">
+    <div class="esercizi-modal">
+      <div class="esercizi-modal-body">
+        <p class="modal-message">Sicuro di voler cancellare la categoria?</p>
+        <div class="modal-actions">
+          <button type="button" class="modal-yes" (click)="removeCategoryConfirmed()">Si</button>
+          <button type="button" class="modal-no" (click)="closeDeleteCategoryModal()">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE NUOVO ESERCIZIO (CON AUTOCOMPLETE CATEGORIE) ===================== -->
+ <!-- ... codice precedente invariato ... -->
+
+  <!-- ===================== MODALE NUOVO ESERCIZIO (solo sezione categoria aggiornata) ===================== -->
+  <div class="esercizi-modal-backdrop" *ngIf="showExerciseModal">
+    <div class="esercizi-modal">
+      <div class="esercizi-modal-body">
+        <div class="image-upload-zone">
+          <label class="input-image-label">
+            <span class="icon-image-upload-big">
+              <ng-container *ngIf="!exerciseImage; else exercisePreviewTpl">
+                <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
+                  <rect x="10" y="10" width="160" height="160" rx="25" fill="#F7FBFF" stroke="#b5d9f8" stroke-width="3"></rect>
+                  <rect x="47" y="125" width="86" height="25" rx="10" fill="#d1eaff"></rect>
+                  <rect x="60" y="99" width="63" height="17" rx="7" fill="#bfe1fc"></rect>
+                  <circle cx="66" cy="67" r="13" fill="#83b4fa"></circle>
+                  <rect x="10" y="10" width="160" height="160" rx="25" stroke="#b5d9f8" stroke-width="3"></rect>
+                  <polyline points="36,151 80,92 110,135 144,74 168,130"
+                            fill="none" stroke="#5ab0fa" stroke-width="4.5"
+                            stroke-linecap="round" stroke-linejoin="round"></polyline>
+                </svg>
+              </ng-container>
+              <ng-template #exercisePreviewTpl>
+                <img [src]="exerciseImage" class="image-preview" alt="Preview immagine esercizio">
+              </ng-template>
+            </span>
+            <input type="file" (change)="onExerciseImageChange($event)" accept="image/*">
+          </label>
+        </div>
+
+        <label class="field-label" for="exercise-name">
+          Nome esercizio
+          <input id="exercise-name"
+                 type="text"
+                 [(ngModel)]="exerciseName"
+                 (keydown.enter)="saveExercise()"
+                 placeholder="Nome esercizio"
+                 autocomplete="off">
+        </label>
+
+        <!-- ============= CATEGORIA: LABEL SINGOLA CON AUTOCOMPLETE ============= -->
+        <label class="field-label" for="exercise-category-auto">
+          Categoria
+          <div class="single-autocat-wrapper">
+            <input
+              id="exercise-category-auto"
+              type="text"
+              [(ngModel)]="exerciseCategoryInput"
+              (input)="onAutoCategoryInput()"
+              (blur)="onAutoCategoryBlur()"
+              placeholder="Digita almeno 3 caratteri"
+              autocomplete="off"
+              [ngClass]="{ 'auto-matched': autoCatMatched }"
+            >
+            <button type="button"
+                    class="clear-cat-btn"
+                    *ngIf="exerciseCategoryInput"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="clearCategoryInput()"
+                    aria-label="Pulisci categoria">
+              ×
+            </button>
+          </div>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button"
+                  class="modal-yes"
+                  (click)="saveExercise()"
+                  [disabled]="!exerciseName.trim() || !exerciseCategoryInput.trim()">
+            Salva
+          </button>
+          <button type="button" class="modal-no" (click)="closeExerciseModal()">Annulla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE NUOVA CATEGORIA ===================== -->
+  <div class="esercizi-modal-backdrop" *ngIf="showCategoryModal">
+    <div class="esercizi-modal">
+      <div class="esercizi-modal-body">
+        <div class="image-upload-zone">
+          <label class="input-image-label">
+            <span class="icon-image-upload-big">
+              <ng-container *ngIf="!categoryImage; else categoryPreviewTpl">
+                <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
+                  <rect x="10" y="10" width="160" height="160" rx="25" fill="#F7FBFF" stroke="#b5d9f8" stroke-width="3"></rect>
+                  <rect x="47" y="125" width="86" height="25" rx="10" fill="#d1eaff"></rect>
+                  <rect x="60" y="99" width="63" height="17" rx="7" fill="#bfe1fc"></rect>
+                  <circle cx="66" cy="67" r="13" fill="#83b4fa"></circle>
+                  <rect x="10" y="10" width="160" height="160" rx="25" stroke="#b5d9f8" stroke-width="3"></rect>
+                  <polyline points="36,151 80,92 110,135 144,74 168,130"
+                            fill="none" stroke="#5ab0fa" stroke-width="4.5"
+                            stroke-linecap="round" stroke-linejoin="round"></polyline>
+                </svg>
+              </ng-container>
+              <ng-template #categoryPreviewTpl>
+                <img [src]="categoryImage" class="image-preview" alt="Preview immagine categoria">
+              </ng-template>
+            </span>
+            <input type="file" (change)="onCategoryImageChange($event)" accept="image/*">
+          </label>
+        </div>
+        <label class="field-label" for="category-name">
+          Nome categoria
+          <input id="category-name" type="text" [(ngModel)]="categoryName" placeholder="Nome categoria" autocomplete="off">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="modal-yes" (click)="saveCategory()" [disabled]="!categoryName.trim()">Salva</button>
+          <button type="button" class="modal-no" (click)="closeCategoryModal()">Annulla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE MODIFICA CATEGORIA ===================== -->
+  <div class="esercizi-modal-backdrop" *ngIf="showEditCategoryModal">
+    <div class="esercizi-modal">
+      <div class="esercizi-modal-body">
+        <div class="image-upload-zone">
+          <label class="input-image-label">
+            <span class="icon-image-upload-big">
+              <ng-container *ngIf="!editCategoryImage; else editCategoryPreviewTpl">
+                <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
+                  <rect x="10" y="10" width="160" height="160" rx="25" fill="#F7FBFF" stroke="#b5d9f8" stroke-width="3"></rect>
+                  <rect x="47" y="125" width="86" height="25" rx="10" fill="#d1eaff"></rect>
+                  <rect x="60" y="99" width="63" height="17" rx="7" fill="#bfe1fc"></rect>
+                  <circle cx="66" cy="67" r="13" fill="#83b4fa"></circle>
+                  <rect x="10" y="10" width="160" height="160" rx="25" stroke="#b5d9f8" stroke-width="3"></rect>
+                  <polyline points="36,151 80,92 110,135 144,74 168,130"
+                            fill="none" stroke="#5ab0fa" stroke-width="4.5"
+                            stroke-linecap="round" stroke-linejoin="round"></polyline>
+                </svg>
+              </ng-container>
+              <ng-template #editCategoryPreviewTpl>
+                <img [src]="editCategoryImage" class="image-preview" alt="Preview immagine categoria">
+              </ng-template>
+            </span>
+            <input type="file" (change)="onEditCategoryImageChange($event)" accept="image/*">
+          </label>
+        </div>
+        <label class="field-label" for="category-edit-name">
+          Nome categoria
+          <input id="category-edit-name" type="text" [(ngModel)]="editCategoryName" placeholder="Nome categoria" autocomplete="off">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="modal-yes" (click)="saveEditCategory()" [disabled]="!editCategoryName.trim()">Salva</button>
+          <button type="button" class="modal-no" (click)="closeEditCategoryModal()">Annulla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

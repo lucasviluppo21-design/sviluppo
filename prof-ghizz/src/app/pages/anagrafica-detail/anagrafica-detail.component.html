@@ -1,0 +1,230 @@
+<div class="page anagrafica-detail">
+  <h2>Cliente</h2>
+  <ng-container *ngIf="user; else notfound">
+    <div class="user-detail-header">
+      <div class="user-avatar-big">
+        <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" [alt]="user.name" />
+        <ng-container *ngIf="!user.avatarUrl">
+          <span class="material-icons avatar-placeholder-big" style="font-size:72px;border-radius:50%;background:#f4f4f4;color:#bbb;">person</span>
+        </ng-container>
+      </div>
+      <div class="user-basic-info">
+        <div class="user-row-top">
+          <div>
+            <div class="user-detail-name">{{ user.name }}</div>
+            <div class="user-detail-email">{{ user.email }}</div>
+            <div class="user-detail-phone">
+              Tel: {{ user.phone || '-' }}
+              <button
+                *ngIf="user.phone && user.subscriptionEnd"
+                class="icon-btn wa-btn"
+                style="margin-left:12px; background:#fff; border:2px solid #25d366; border-radius:50%; padding:4px 7px; box-shadow:0 1px 4px rgba(0,0,0,0.07); width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;"
+                title="Messaggia su WhatsApp"
+                (click)="openWhatsAppWithMessage()">
+                <svg width="28" height="28" viewBox="0 0 32 32" style="vertical-align:middle;">
+                  <circle cx="16" cy="16" r="16" fill="#25d366"/>
+                  <path d="M22 20.7c-.4 0-.8.1-1.2.2-.7.2-1.3.3-2 .3l-.4-.2c-2.7-1.1-5.7-3.9-6.6-6.6l-.1-.4c0-.7.1-1.4.3-2l.2-1.2c.1-.4-.1-.8-.3-1.1-.3-.3-.7-.5-1.1-.5h-2c-.5 0-1 .2-1.3.5-.6.6-.9 1.5-.6 2.4C8.5 17 12.4 20.1 16.6 21.2c.9.3 1.8 0 2.4-.6.3-.3.5-.8.5-1.3v-2c0-.4-.2-.8-.5-1.1-.3-.3-.8-.5-1.2-.3z" fill="#fff" />
+                </svg>
+              </button>
+              <span *ngIf="isExpired(user.subscriptionEnd)"
+                    class="badge badge-danger"
+                    style="margin-left:8px; background:#ffdede; color:#d32f2f; border-radius:6px; padding:0 8px;">
+                Tessera scaduta!
+              </span>
+            </div>
+          </div>
+          <div class="status-date">
+            <span class="user-status-label" [ngClass]="{'active': user.status === 'Attivo', 'inactive': user.status !== 'Attivo'}">
+              {{ user.status }}
+            </span>
+            <div class="user-detail-signup-date">Data iscrizione: {{ user.signupDate }}</div>
+          </div>
+        </div>
+        <div class="user-detail-actions">
+          <button class="btn" (click)="openEditModal()">Modifica Profilo</button>
+          <button class="btn outline" (click)="openDeleteModal()">Elimina Cliente</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-detail-content">
+      <div class="user-detail-col">
+        <div class="user-detail-section">
+          <h3>Dettagli Cliente</h3>
+          <div class="personal-info-row"><span>Nome</span><span>{{ user.name.split(' ')[0] }}</span></div>
+          <div class="personal-info-row"><span>Cognome</span><span>{{ user.name.split(' ').slice(1).join(' ') || '-' }}</span></div>
+          <div class="personal-info-row"><span>Data di nascita</span><span>{{ user.birthDate || '-' }}</span></div>
+          <div class="personal-info-row"><span>Genere</span><span>{{ user.gender || '-' }}</span></div>
+          <div class="personal-info-row"><span>Indirizzo</span><span>{{ user.address || '-' }}</span></div>
+          <div class="personal-info-row"><span>Città</span><span>{{ user.city || '-' }}</span></div>
+          <div class="personal-info-row"><span>Provincia</span><span>{{ user.provincia || '-' }}</span></div>
+          <div class="personal-info-row"><span>CAP</span><span>{{ user.cap || '-' }}</span></div>
+        </div>
+
+        <div class="user-detail-section">
+          <h3>Tessera</h3>
+          <div class="personal-info-row">
+            <span>Scadenza</span>
+            <span>
+              <input
+                type="date"
+                class="gestabbonamento-date"
+                [value]="user.subscriptionEnd || ''"
+                (change)="updateSubscriptionEnd($event.target.value)"
+                style="background:#fff; border:none;outline:none; font-size:1rem; color:#195089;" />
+            </span>
+          </div>
+        </div>
+
+        <div class="user-detail-section">
+          <h3>Note Personali</h3>
+          <div class="note-box">{{ user.personalNotes || '' }}</div>
+        </div>
+      </div>
+
+      <div class="user-detail-col user-detail-col-wide">
+        <div class="user-detail-section">
+          <div class="schede-header">
+            <h3>Schede di Allenamento</h3>
+            <div class="schede-count" *ngIf="filteredCards.length">Totale: {{ filteredCards.length }}</div>
+            <label style="margin-left:16px; font-weight:400;">
+              <input type="checkbox" [(ngModel)]="filterExpiredOnly" />
+              Solo tessere SCADUTE
+            </label>
+          </div>
+          <div class="scheda-box">
+            <ng-container *ngIf="filteredCards.length > 0; else schedeVuote">
+              <div class="scheda-row" *ngFor="let card of filteredCards; let i = index">
+                <div class="scheda-info-flex scheda-info" style="flex-direction: row; align-items: center; gap: 10px;">
+                  <span class="material-icons scheda-icon">assignment</span>
+                  <span class="scheda-date" style="font-weight:600;">
+                    {{ card.date }}<ng-container *ngIf="card.time"> - {{ card.time }}</ng-container>
+                  </span>
+                  <label style="margin-left:14px;">
+                    <span style="font-size:.98rem;color:#1742b0;">Scadenza Tessera:&nbsp;</span>
+                    <input 
+                      type="date"
+                      [value]="card.abbonamentoEndDate || ''"
+                      (change)="updateCardAbbonamentoEndDate(i, $event.target.value)"
+                      style="background:#fff; border:none;outline:none; font-size:1rem; color:#1742b0;"
+                    />
+                  </label>
+                </div>
+                <div class="scheda-actions-inline">
+                  <button class="btn small" (click)="printCard(i)" title="Stampa PDF">
+                    <span class="material-icons small-icon">print</span>
+                  </button>
+                  <button class="btn small outline" (click)="deleteCard(i)" title="Elimina">
+                    <span class="material-icons small-icon">delete</span>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #schedeVuote>
+              <div class="scheda-empty">
+                Nessuna scheda associata. Salva una scheda dalla pagina Gestione Schede per vederla qui.
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modali di cancellazione e modifica invariati -->
+    <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()"></div>
+    <div class="modal-confirm-delete" *ngIf="showDeleteModal">
+      <div class="modal-confirm-content" (click)="$event.stopPropagation()">
+        <p>Sei sicuro di voler eliminare questo cliente in modo definitivo?</p>
+        <div class="modal-confirm-actions">
+          <button class="btn danger" (click)="deleteUserCustom()">Elimina</button>
+          <button class="btn outline" (click)="closeDeleteModal()">Annulla</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()"></div>
+    <div class="modal-edit-profilo" *ngIf="showEditModal">
+      <form (ngSubmit)="saveEditModal()" (click)="$event.stopPropagation()" autocomplete="off">
+        <h2>Profilo Cliente</h2>
+        <div class="modal-edit-flex">
+          <div class="modal-avatar-box" (click)="triggerAvatarInput(avatarInput)">
+            <ng-container *ngIf="editForm.avatarUrl || user?.avatarUrl; else emptyAvatar">
+              <img 
+                [src]="editForm.avatarUrl || user?.avatarUrl"
+                alt="Avatar"
+                class="avatar-img-preview"
+                style="width:72px;height:72px;border-radius:50%;object-fit:cover;cursor:pointer;box-shadow:0 0 8px #eee;">
+            </ng-container>
+            <ng-template #emptyAvatar>
+              <span 
+                class="material-icons"
+                style="font-size:60px; width:72px; height:72px; border-radius:50%; background:#f4f4f4; color:#9b9b9b; display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">
+                person
+              </span>
+            </ng-template>
+            <input #avatarInput type="file" accept="image/*" (change)="onAvatarChange($event)" hidden>
+          </div>
+          <div *ngIf="avatarLoading" class="avatar-loader" style="margin-left:15px;color:#888;">Caricamento immagine in corso...</div>
+          <div class="modal-fields-note-wrap">
+            <div class="modal-fields-grid">
+              <label>Nome
+                <input type="text" [(ngModel)]="nome" name="nome" required>
+              </label>
+              <label>Cognome
+                <input type="text" [(ngModel)]="cognome" name="cognome" required>
+              </label>
+              <label>Email
+                <input type="email" [(ngModel)]="editForm.email" name="email" required>
+              </label>
+              <label>Telefono
+                <input type="text" [(ngModel)]="editForm.phone" name="phone">
+              </label>
+              <label>Data di nascita
+                <input type="date" [(ngModel)]="editForm.birthDate" name="birthDate">
+              </label>
+              <label>Genere
+                <select [(ngModel)]="editForm.gender" name="gender">
+                  <option value="">-</option>
+                  <option value="Uomo">Uomo</option>
+                  <option value="Donna">Donna</option>
+                  <option value="Altro">Altro</option>
+                </select>
+              </label>
+              <label>Indirizzo
+                <input type="text" [(ngModel)]="editForm.address" name="address">
+              </label>
+              <label>Città
+                <input type="text" [(ngModel)]="editForm.city" name="city">
+              </label>
+              <label>Provincia
+                <input type="text" [(ngModel)]="editForm.provincia" name="provincia">
+              </label>
+              <label>CAP
+                <input type="text" [(ngModel)]="editForm.cap" name="cap">
+              </label>
+              <label>Stato
+                <select [(ngModel)]="editForm.status" name="status">
+                  <option value="">-</option>
+                  <option value="Attivo">Attivo</option>
+                  <option value="Inattivo">Inattivo</option>
+                </select>
+              </label>
+            </div>
+            <div class="modal-field-note-row">
+              <label>Note personali
+                <textarea [(ngModel)]="editForm.personalNotes" name="personalNotes" rows="4"></textarea>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-edit-actions">
+          <button type="submit" class="btn">Salva</button>
+          <button type="button" class="btn outline" (click)="closeEditModal()">Annulla</button>
+        </div>
+      </form>
+    </div>
+  </ng-container>
+  <ng-template #notfound>
+    <p>Utente non trovato</p>
+  </ng-template>
+</div>

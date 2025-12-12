@@ -1,0 +1,62 @@
+:host{display:block}
+.app-sidebar{
+  width:80px;
+  background:#0b2a63;
+  padding:8px;
+  border-right:1px solid rgba(255,255,255,0.06);
+  height:100vh;
+  min-height:110vh;
+  box-sizing:border-box;
+  /* ritorna relative per NO effetto scroll fisso rispetto a viewport! */
+  position:relative;
+  z-index:1100;
+  pointer-events:auto;
+}
+.app-sidebar ul{
+  list-style:none;
+  padding:0;
+  margin:8px 0 0 0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  padding-top:12px;
+}
+.app-sidebar li{
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:4px 6px;
+  color:#fff;
+  font-weight:700;
+}
+.app-sidebar a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:56px;
+  height:56px;
+  border-radius:12px;
+  color:#fff;
+  text-decoration:none;
+  cursor:pointer;
+}
+.app-sidebar a:hover{
+  background:rgba(255,255,255,0.06)
+}
+.app-sidebar a.active{
+  background:rgba(255,255,255,0.12);
+  color:#fff;
+  font-weight:700;
+}
+.app-sidebar .icon{font-size:18px}
+
+/* Non-link items (like settings) keep icon + text layout */
+.app-sidebar li span.icon{margin-right:8px}
+
+.app-sidebar .side-svg{width:28px;height:28px;display:block}
+.app-sidebar .sr-only{position:absolute;left:-9999px}
+
+.app-sidebar .side-label{display:flex;align-items:center;gap:10px;padding:10px 8px;color:#fff;font-weight:700}
+.app-sidebar .side-label svg{opacity:0.95}

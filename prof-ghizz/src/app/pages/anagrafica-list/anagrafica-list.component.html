@@ -1,0 +1,156 @@
+<div class="page anagrafica-list">
+  <h2>Lista Utenti</h2>
+  <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+    <button class="btn primary" (click)="openModal()">Cliente</button>
+    <label style="display:inline-block;">
+      <input type="checkbox" [(ngModel)]="filterExpiredOnly" (change)="applyFilters()" />
+      Solo abbonamento scaduto
+    </label>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:1rem;font-weight:400;">Tessera:</span>
+      <select [(ngModel)]="filterTessera" (change)="applyFilters()" class="tessera-combo">
+        <option value="">Tutte</option>
+        <option value="attiva">Attive</option>
+        <option value="scaduta">Scadute</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;">
+      <span style="font-size:1rem;font-weight:400;">Scheda:</span>
+      <label style="display:inline-flex;align-items:center;gap:6px;">
+        <input type="radio" name="scheda" [(ngModel)]="filterScheda" value="scaduta" (change)="applyFilters()" />
+        <span style="color:#d32f2f;">Scaduta</span>
+      </label>
+      <label style="display:inline-flex;align-items:center;gap:6px;">
+        <input type="radio" name="scheda" [(ngModel)]="filterScheda" value="attiva" (change)="applyFilters()" />
+        <span style="color:#318b2b;">Attiva</span>
+      </label>
+      <label style="display:inline-flex;align-items:center;gap:6px;">
+        <input type="radio" name="scheda" [(ngModel)]="filterScheda" value="" (change)="applyFilters()" />
+        <span style="color:#333;">Tutte</span>
+      </label>
+    </div>
+  </div>
+  <div class="list">
+    <div class="row" *ngFor="let u of filteredUsers">
+      <div class="left">
+        <div class="name">{{u.name}}</div>
+        <div class="email">{{u.email}}</div>
+        <button *ngIf="u.phone && u.subscriptionEnd"
+          class="icon-btn wa-btn"
+          style="margin-left:12px"
+          title="Invia messaggio WhatsApp"
+          (click)="openWhatsApp(u.phone, u.name, u.subscriptionEnd)">
+          <span class="material-icons" style="color:#25d366">chat</span>
+        </button>
+        <span *ngIf="u.subscriptionEnd && (u.subscriptionEnd < today)"
+              class="badge badge-danger" style="margin-left:8px;">Abbonamento scaduto</span>
+        <span *ngIf="u.schedaEnd && filterScheda==='scaduta' && (u.schedaEnd <= today)"
+              class="badge badge-danger" style="margin-left:8px;">Scheda scaduta</span>
+        <span *ngIf="u.schedaEnd && filterScheda==='attiva' && (u.schedaEnd > today)"
+              class="badge badge-success" style="margin-left:8px;">Scheda attiva</span>
+      </div>
+      <div class="actions">
+        <a [routerLink]="['/anagrafica', u.id]" class="btn small">Dettaglio</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Cliente -->
+  <div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()"></div>
+  <div class="modal-nuovo-utente" *ngIf="modalOpen">
+    <form (ngSubmit)="registerUser()" class="modal-form" (click)="$event.stopPropagation()" #modalForm="ngForm">
+      <h2>Registra Cliente</h2>
+      <div class="modal-fields modal-fields-2col">
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Nome</label>
+            <input type="text" placeholder="Nome" [(ngModel)]="form.nome" name="nome" autocomplete="off" required>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Cognome</label>
+            <input type="text" placeholder="Cognome" [(ngModel)]="form.cognome" name="cognome" autocomplete="off" required>
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Email</label>
+            <input type="email" placeholder="Email" [(ngModel)]="form.email" name="email" autocomplete="off" required>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Numero di Telefono</label>
+            <input type="text" placeholder="Numero di Telefono" [(ngModel)]="form.phone" name="phone">
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Data Iscrizione</label>
+            <input type="date" [(ngModel)]="form.signupDate" name="signupDate">
+          </div>
+          <div class="form-group">
+            <label class="field-label">Stato</label>
+            <select [(ngModel)]="form.status" name="status">
+              <option value="">-</option>
+              <option value="Attivo">Attivo</option>
+              <option value="Inattivo">Inattivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Indirizzo</label>
+            <input type="text" placeholder="Indirizzo" [(ngModel)]="form.address" name="address">
+          </div>
+          <div class="form-group">
+            <label class="field-label">Città</label>
+            <input type="text" placeholder="Città" [(ngModel)]="form.city" name="city">
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Provincia</label>
+            <input type="text" placeholder="Provincia" [(ngModel)]="form.provincia" name="provincia">
+          </div>
+          <div class="form-group">
+            <label class="field-label">CAP</label>
+            <input type="text" placeholder="CAP" [(ngModel)]="form.cap" name="cap">
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Data di nascita</label>
+            <input type="date" [(ngModel)]="form.birthDate" name="birthDate">
+          </div>
+          <div class="form-group">
+            <label class="field-label">Genere</label>
+            <select [(ngModel)]="form.gender" name="gender">
+              <option value="">-</option>
+              <option value="Uomo">Uomo</option>
+              <option value="Donna">Donna</option>
+              <option value="Altro">Altro</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group">
+            <label class="field-label">Scadenza Abbonamento</label>
+            <input type="date" [(ngModel)]="form.subscriptionEnd" name="subscriptionEnd">
+          </div>
+          <div class="form-group">
+            <label class="field-label">Scadenza Scheda</label>
+            <input type="date" [(ngModel)]="form.schedaEnd" name="schedaEnd">
+          </div>
+        </div>
+        <div class="modal-form-row">
+          <div class="form-group" style="flex:1;">
+            <label class="field-label">Note personali</label>
+            <textarea placeholder="Note personali" [(ngModel)]="form.personalNotes" name="personalNotes"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn cancel" (click)="closeModal()">Annulla</button>
+        <button type="submit" class="btn primary" [disabled]="modalForm.invalid">Registra Cliente</button>
+      </div>
+    </form>
+  </div>
+</div>

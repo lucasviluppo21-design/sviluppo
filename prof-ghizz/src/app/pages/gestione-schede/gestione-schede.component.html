@@ -1,0 +1,207 @@
+<div class="save-toast" *ngIf="showSavedMsg">
+  {{ savedMsgText }}
+</div>
+<div class="schede-page">
+  <aside class="col-left section-box">
+   <div class="avatar-block" (click)="openUserPicker()">
+  <img *ngIf="cliente?.avatarUrl" [src]="cliente?.avatarUrl" alt="Cliente">
+  <div *ngIf="!cliente?.avatarUrl" class="avatar-placeholder">👤</div>
+  </div>
+    <div class="cliente-name">{{ cliente?.name || 'Seleziona cliente' }}</div>
+    <div class="cliente-info">
+      <div class="info-row">
+        <span class="label">Stato</span>
+        <select [(ngModel)]="scheda.stato">
+          <option>In preparazione</option>
+          <option>Attiva</option>
+          <option>Completata</option>
+          <option>Sospesa</option>
+        </select>
+      </div>
+      <div class="info-row">
+        <span class="label">Livello</span>
+        <select [(ngModel)]="scheda.livello">
+          <option>Principiante</option>
+          <option>Intermedio</option>
+          <option>Avanzato</option>
+        </select>
+      </div>
+      <div class="info-row">
+        <span class="label">Durata</span>
+        <input type="text" [(ngModel)]="scheda.durata" placeholder="es. 8 Settimane">
+      </div>
+      <div class="info-row">
+        <span class="label">Inizio</span>
+        <input type="date" [(ngModel)]="scheda.dataInizio">
+      </div>
+    </div>
+    <div class="logo-uploader">
+      <label for="logoInput" class="logo-upload-box">
+        <ng-container *ngIf="!logoPreviewUrl">
+          <svg width="75" height="75" viewBox="0 0 75 75" fill="none">
+            <rect x="3" y="3" width="69" height="69" rx="16" fill="#F4F8FB" stroke="#b9cddd" stroke-width="2.3"/>
+            <g>
+              <rect x="17" y="23" width="41" height="30" rx="5" fill="#E8F0FA" stroke="#b9cddd" stroke-width="1.6"/>
+              <circle cx="29" cy="37" r="5.5" fill="#b9cddd"/>
+              <path d="M19 53l12-12c2-2 5.6-2 7.6 0l15 15c1.9 1.9 5 1.6 6.8-.4l8-10.5"
+                stroke="#2563eb" stroke-width="2" fill="none"/>
+            </g>
+          </svg>
+        </ng-container>
+        <img *ngIf="logoPreviewUrl" [src]="logoPreviewUrl" alt="Logo anteprima" class="logo-preview-img">
+        <input type="file" id="logoInput" accept="image/*" (change)="onLogoSelect($event)" hidden>
+      </label>
+    </div>
+    <div class="left-actions">
+      <button class="btn primary" (click)="salvaScheda()">Salva Scheda</button>
+      <button class="btn outline" (click)="anteprimaPdf()">Stampa PDF</button>
+      <button class="btn share" (click)="openShareModal()" [disabled]="!cliente">Condividi Link</button>
+    </div>
+  </aside>
+  <section class="col-center section-box">
+    <div class="giorni-tabs">
+      <div class="tab-item"
+           *ngFor="let g of scheda.giorni; let i = index"
+           [class.active]="i===giornoAttivoIndex">
+        <div *ngIf="!g.editing"
+             class="tab-label"
+             (click)="setGiorno(i)"
+             (dblclick)="enableTabEdit(g)">
+          {{ g.nome }}
+        </div>
+        <input *ngIf="g.editing"
+               class="tab-edit"
+               [(ngModel)]="g.nome"
+               (blur)="disableTabEdit(g)"
+               (keydown.enter)="disableTabEdit(g)">
+      </div>
+      <button class="tab-add" (click)="aggiungiGiorno()">+ Giorno</button>
+      <button class="tab-remove"
+              (click)="rimuoviGiorno()"
+              [disabled]="scheda.giorni.length === 1"
+              title="Rimuovi giorno">
+        – Giorno
+      </button>
+    </div>
+    <div class="giorno-contenuto">
+      <div class="empty-drop" *ngIf="scheda.giorni[giornoAttivoIndex].esercizi.length===0">
+        Aggiungi un esercizio dalla colonna destra
+      </div>
+      <div class="exercise-list" *ngIf="scheda.giorni[giornoAttivoIndex].esercizi.length > 0">
+        <div class="exercise-card"
+             *ngFor="let ex of pagedExercises; let k = index">
+          <div class="ex-top">
+            <div class="ex-img">
+              <img *ngIf="ex.image" [src]="ex.image" alt="{{ex.nome}}">
+              <div *ngIf="!ex.image" class="ex-placeholder">🏋️</div>
+            </div>
+            <div class="ex-title">{{ ex.nome }}</div>
+            <div class="ex-controls">
+              <button class="btn-icon move" title="Sposta su" (click)="moveExerciseUp(k)" [disabled]="(currentExercisePage * pageSize + k) === 0">↑</button>
+              <button class="btn-icon move" title="Sposta giù" (click)="moveExerciseDown(k)" [disabled]="(currentExercisePage * pageSize + k) === scheda.giorni[giornoAttivoIndex].esercizi.length - 1">↓</button>
+              <button class="btn-icon reset" title="Reset valori" (click)="resetExercise(k)">⟳</button>
+              <button class="btn-icon remove" (click)="rimuoviEsercizio(k)">×</button>
+            </div>
+          </div>
+          <div class="ex-fields">
+            <label>Serie <input type="number" min="1" [(ngModel)]="ex.serie"></label>
+            <label>Ripetizioni <input type="number" min="1" [(ngModel)]="ex.ripetizioni"></label>
+            <label>Min <input type="number" min="0" [(ngModel)]="ex.minuti"></label>
+            <label>Sec <input type="number" min="0" [(ngModel)]="ex.secondi"></label>
+          </div>
+          <textarea class="ex-note" rows="2"
+              [(ngModel)]="ex.note"
+              placeholder="Note"
+              (blur)="persistSchedule()"></textarea>
+        </div>
+      </div>
+      <div class="exercise-pagination-mini" *ngIf="scheda.giorni[giornoAttivoIndex].esercizi.length > 0">
+        <button class="page-arrow-mini" (click)="goToPrevExercisePage()" [disabled]="currentExercisePage <= 0">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="transparent"/><path d="M15.5 19 9.5 12l6-7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="page-indicator-mini">
+          {{ currentExercisePage + 1 }} / {{ totalExercisePages || 1 }}
+        </span>
+        <button class="page-arrow-mini" (click)="goToNextExercisePage()" [disabled]="currentExercisePage >= totalExercisePages - 1">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="transparent"/><path d="M8.5 5 14.5 12l-6 7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+  <aside class="col-right section-box">
+    <div class="search-box">
+      <input type="text" [(ngModel)]="searchTerm" (input)="filtraEsercizi()" placeholder="Cerca esercizi...">
+      <select [(ngModel)]="filterCategoria" (change)="filtraEsercizi()">
+        <option value="">Tutte le categorie</option>
+        <option *ngFor="let c of categorie | slice:0:3" [value]="c.name">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="esercizi-scroll">
+      <div class="big-ex-card"
+           *ngFor="let e of eserciziFiltrati | slice:0:3"
+           (click)="aggiungiEsercizioAlGiorno(e)">
+        <div class="big-img">
+          <img *ngIf="e.image" [src]="e.image" alt="{{ e.name }}">
+          <div *ngIf="!e.image" class="big-placeholder">🏋️</div>
+        </div>
+        <div class="big-info">
+          <div class="big-name">{{ e.name }}</div>
+          <div class="big-cat">{{ e.category }}</div>
+        </div>
+      </div>
+      <div class="empty-right" *ngIf="eserciziFiltrati.length===0">Nessun esercizio</div>
+    </div>
+  </aside>
+</div>
+
+<div class="user-picker-backdrop" *ngIf="showUserPicker">
+  <div class="user-picker-modal">
+    <div class="picker-header">
+      <div class="picker-title">Seleziona Cliente</div>
+      <button class="picker-close" (click)="closeUserPicker()">×</button>
+    </div>
+    <input class="picker-search" type="text" [(ngModel)]="userSearch" (input)="filterUsers()" placeholder="Cerca nome o email...">
+    <div class="picker-list">
+      <div class="picker-item" *ngFor="let u of filteredUserList | slice:0:3" (click)="selectUser(u)">
+        <div class="pi-avatar">
+          <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="{{u.name}}">
+          <span *ngIf="!u.avatarUrl">👤</span>
+        </div>
+        <div class="pi-data">
+          <div class="pi-name">{{ u.name }}</div>
+          <div class="pi-email" *ngIf="u.email">{{ u.email }}</div>
+          <div class="pi-status" [class.inactive]="u.status!=='Attivo'">{{ u.status }}</div>
+        </div>
+      </div>
+      <div class="picker-empty" *ngIf="filteredUserList.length===0">Nessun utente</div>
+    </div>
+  </div>
+</div>
+<div class="share-backdrop" *ngIf="shareModalOpen">
+  <div class="share-modal">
+    <div class="share-header">
+      <div class="share-title">Condividi Scheda</div>
+      <button class="share-close" (click)="closeShareModal()">×</button>
+    </div>
+    <div class="share-body">
+      <div class="share-options">
+        <button class="share-option" (click)="shareEmail('gmail')">
+          <span class="share-icon gmail">G</span>
+          <span class="share-label">Gmail</span>
+        </button>
+        <button class="share-option" (click)="shareEmail('outlook')">
+          <span class="share-icon outlook">O</span>
+          <span class="share-label">Outlook</span>
+        </button>
+        <button class="share-option" (click)="copyShareLink()">
+          <span class="share-icon link">🔗</span>
+          <span class="share-label">Copia Link</span>
+        </button>
+      </div>
+      <div class="share-link-box">
+        <input type="text" [value]="generatedLink" readonly>
+        <button class="btn mini" (click)="copyShareLink()">Copia</button>
+      </div>
+    </div>
+  </div>
+</div>

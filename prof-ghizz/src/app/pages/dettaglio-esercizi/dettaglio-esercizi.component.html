@@ -1,0 +1,79 @@
+<div class="dettaglio-esercizi-layout" *ngIf="exercise; else notFound">
+  <!-- Media / immagine esercizio -->
+  <div class="left-media">
+    <div class="media-box" [class.clickable]="editMode" (click)="onMediaBoxClick()">
+      <img *ngIf="editForm.media || editForm.image" [src]="editForm.media || editForm.image" alt="Immagine esercizio" />
+      <div *ngIf="!(editForm.media || editForm.image)" class="media-placeholder">
+        <span class="placeholder-icon"></span>
+      </div>
+      <input #fileInput type="file" accept="image/*" (change)="onMediaChange($event)" hidden />
+    </div>
+  </div>
+
+  <!-- Form centrale -->
+  <div class="center-form">
+    <div class="top-actions">
+      <button type="button" class="btn" (click)="enableEdit()" *ngIf="!editMode">Modifica</button>
+      <button type="button" class="btn" (click)="saveExercise()" *ngIf="editMode">Salva Esercizio</button>
+      <button type="button" class="btn outline" (click)="cancelEdit()" *ngIf="editMode">Annulla</button>
+      <button type="button" class="btn outline" (click)="backToList()">Indietro</button>
+    </div>
+
+    <h2>Esercizio</h2>
+
+    <div class="form-row">
+      <label>Nome</label>
+      <input type="text" [(ngModel)]="editForm.name" [readonly]="!editMode" />
+    </div>
+
+    <div class="form-row">
+      <label>Categoria</label>
+      <input type="text" [(ngModel)]="editForm.category" [readonly]="!editMode" />
+    </div>
+
+    <div class="form-row">
+      <label>Descrizione Tecnica</label>
+      <textarea rows="5" [(ngModel)]="editForm.description" [readonly]="!editMode"></textarea>
+    </div>
+
+    <div class="form-row small-tags">
+      <label>Muscoli Coinvolti</label>
+      <div class="tags">
+        <span class="tag" *ngFor="let m of editForm.muscles; let i = index">
+          {{ m }}
+          <button type="button" class="tag-remove" *ngIf="editMode" (click)="removeMuscle(i)" aria-label="Rimuovi">×</button>
+        </span>
+      </div>
+      <div class="tag-add" *ngIf="editMode">
+        <input type="text" [(ngModel)]="newMuscle" placeholder="Aggiungi muscolo..." (keydown.enter)="addMuscle()" />
+        <button type="button" class="btn small" (click)="addMuscle()">Aggiungi</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Difficoltà</label>
+      <select [(ngModel)]="editForm.difficulty" [disabled]="!editMode">
+        <option value="Facile">Facile</option>
+        <option value="Intermedio">Intermedio</option>
+        <option value="Difficile">Difficile</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Solo Note Personali a destra -->
+  <aside class="right-side">
+    <div class="notes">
+      <h4>Note Personali</h4>
+      <div class="note-card" *ngIf="!editMode">{{ notes || 'Nessuna nota' }}</div>
+      <textarea class="note-textarea" rows="6" [(ngModel)]="notes" *ngIf="editMode" placeholder="Scrivi le tue note..."></textarea>
+    </div>
+  </aside>
+</div>
+
+<ng-template #notFound>
+  <div class="center-form">
+    <h2>Esercizio</h2>
+    <p>Elemento non trovato.</p>
+    <button type="button" class="btn outline" (click)="backToList()">Indietro</button>
+  </div>
+</ng-template>

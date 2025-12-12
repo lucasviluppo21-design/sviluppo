@@ -1,0 +1,58 @@
+.home-page h2 {
+  color: #0f2540;
+}
+
+.cards {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(20,40,60,0.06);
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+}
+
+/* Card statistiche e tessere */
+.card.stat-card {
+  margin-bottom: 16px;
+  min-width: 0;
+  flex: 1 1 0;
+  display:flex;
+  align-items:center;
+}
+
+/* Stat numero staccato dalla label */
+.stat-label {
+  margin-left: 7px;
+}
+
+/* Bottoni/statistiche tessera allineate come card */
+.tessera-btn, .tessera-stat {
+  background: #fff;
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  font-size: 1rem;
+  box-shadow: none;
+}
+
+.tessera-btn.warning-card .material-icons,
+.tessera-stat.warning-card .material-icons {
+  color: #d32f2f;
+}
+
+.tessera-btn.success-card .material-icons,
+.tessera-stat.success-card .material-icons {
+  color: #318b2b;
+}

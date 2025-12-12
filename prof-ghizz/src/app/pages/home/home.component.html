@@ -1,0 +1,52 @@
+<div class="page home-page">
+  <h2>Dashboard</h2>
+  <div class="cards">
+    <div class="card stat-card">Clienti attivi <span class="stat-label"><strong>{{ activeClients }}</strong></span></div>
+    <div class="card stat-card">Schede questa settimana <span class="stat-label"><strong>{{ thisWeekCards }}</strong></span></div>
+    <div class="card stat-card">Esercizi totali <span class="stat-label"><strong>{{ totalExercises }}</strong></span></div>
+  </div>
+
+  <!-- Sezione tessere: stessa larghezza delle cards statistiche -->
+  <div class="card stat-card" style="margin-top:20px;">
+    <div class="tessere-row" style="display:flex; align-items:center; gap:18px;">
+      <span style="font-size:1rem; font-weight:400;">Tessere:</span>
+      <div class="tessera-btn warning-card"
+           style="display:flex;align-items:center;gap:7px; background:#fff; border:1px solid #ededed; border-radius:8px; padding:7px 16px; cursor:pointer; box-shadow:none;"
+           (click)="openScaduteModal()">
+        <span style="color:#d32f2f; font-size:1.25em;" class="material-icons">report_problem</span>
+        <span style="font-size:1rem;">Scadute:</span>
+        <span class="stat-label" style="margin-left:7px;"><strong>{{ tessereScadute.length }}</strong></span>
+      </div>
+      <div class="tessera-btn success-card"
+           style="display:flex;align-items:center;gap:7px; background:#fff; border:1px solid #ededed; border-radius:8px; padding:7px 16px; box-shadow:none;">
+        <span style="color:#318b2b; font-size:1.25em;" class="material-icons">verified_user</span>
+        <span style="font-size:1rem;">Attive:</span>
+        <span class="stat-label" style="margin-left:7px;"><strong>{{ tessereAttive.length }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE UTENTI TESSERA SCADUTA -->
+  <div class="modal-backdrop" *ngIf="scaduteModalOpen" (click)="closeScaduteModal()"></div>
+  <div class="modal-tessera-scaduti" *ngIf="scaduteModalOpen">
+    <div class="modal-scaduti-box" (click)="$event.stopPropagation()"
+         style="padding:24px 28px;border-radius:10px;max-width:360px;background:#fff;box-shadow:0 4px 24px -6px #b2b2b2;">
+      <h3 style="color:#d32f2f;font-size:1.15rem;margin-bottom:13px;">
+        <span class="material-icons" style="font-size:26px;vertical-align:middle;margin-right:6px;">warning</span>
+        Tessere scadute
+      </h3>
+      <ul class="scaduti-list" style="margin:0;padding:0;list-style:none;">
+        <li *ngFor="let u of tessereScadute" style="margin-bottom:9px;">
+          <strong>{{ u.name }}</strong>
+          <span *ngIf="u.subscriptionEnd">(<em>Scadenza: {{u.subscriptionEnd}}</em>)</span>
+        </li>
+        <li *ngIf="tessereScadute.length === 0">
+          Nessuna tessera scaduta.
+        </li>
+      </ul>
+      <div style="text-align:right;margin-top:15px;">
+        <button class="btn outline" (click)="closeScaduteModal()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+</div>
