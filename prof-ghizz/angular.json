@@ -24,7 +24,8 @@
             "production": {
               "optimization": true,
               "extractLicenses": true,
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": true
             },
             "development": {
               "optimization": false,
