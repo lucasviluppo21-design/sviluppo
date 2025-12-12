@@ -18,14 +18,16 @@
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.webmanifest"],
             "styles": ["src/styles.css"],
-            "scripts": []
+            "scripts": [],
+            "serviceWorker": true,
+             
+             
           },
           "configurations": {
             "production": {
               "optimization": true,
               "extractLicenses": true,
-              "outputHashing": "all",
-              "serviceWorker": true
+              "outputHashing": "all"
             },
             "development": {
               "optimization": false,
@@ -52,7 +54,5 @@
       }
     }
   },
-  "cli": {
-    "analytics": "7f570686-b0d8-4119-a086-f1c432b5c2c3"
-  }
+  "cli": { "analytics": "7f570686-b0d8-4119-a086-f1c432b5c2c3" }
 }
