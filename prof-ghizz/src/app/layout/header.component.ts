@@ -1,4 +1,5 @@
 import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -11,24 +12,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   canInstall = false;
   isStandalone = false;
 
+  // Versione dall'environment
+  appVersion = environment.version;
+
   constructor(private zone: NgZone) {}
 
   ngOnInit(): void {
-    // Detect standalone (già installata/avviata)
     this.isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (navigator as any).standalone === true;
 
-    // Fallback: se il browser supporta service worker + manifest, mostra link (non prompt)
-    const supportsSW = 'serviceWorker' in navigator;
-    const supportsManifest = !!document.querySelector('link[rel="manifest"]');
-    if (supportsSW && supportsManifest && !this.isStandalone) {
-      // Non garantisce il prompt, ma consente UI
-      this.canInstall = false; // verrà true solo con beforeinstallprompt
-      console.log('[PWA] supporto rilevato, in attesa di beforeinstallprompt…');
-    }
-
-    // Evento beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
       this.deferredPrompt = e as any;
@@ -39,7 +32,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     };
     window.addEventListener('beforeinstallprompt', handler);
 
-    // App installed
     window.addEventListener('appinstalled', () => {
       this.zone.run(() => {
         this.canInstall = false;
@@ -51,12 +43,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Non rimuovo i listener per semplicità, se lo fai, tieni una reference al handler
+    // opzionale: rimuovere i listener se necessario
   }
 
   async installApp(): Promise<void> {
     if (!this.deferredPrompt) {
-      alert('Installazione non disponibile ora. Riprova dopo aver ricaricato la pagina.');
+      alert('Installazione non disponibile ora. Ricarica la pagina e riprova.');
       return;
     }
     this.canInstall = false;

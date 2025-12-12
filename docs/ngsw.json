@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1765548634202,
+  "timestamp": 1765549390976,
   "index": "/sviluppo/index.html",
   "assetGroups": [
     {
@@ -18,7 +18,7 @@
         "/sviluppo/chunk-FW3GKGTX.js",
         "/sviluppo/chunk-WTI2L5DI.js",
         "/sviluppo/index.html",
-        "/sviluppo/main-3L5F4MRE.js",
+        "/sviluppo/main-LZEOSLYV.js",
         "/sviluppo/polyfills-5CFQRCPP.js",
         "/sviluppo/styles-T6YNM5VD.css"
       ],
@@ -49,8 +49,8 @@
     "/sviluppo/chunk-BL37SGO3.js": "cb1dfb98a90cb17ce9847ad4a330a2c124b946c5",
     "/sviluppo/chunk-FW3GKGTX.js": "9289f2587699dd05c0be8c9e30d2484137908b5a",
     "/sviluppo/chunk-WTI2L5DI.js": "07f87a70ea33c6f61a48896d9d5645d0c51f1c4a",
-    "/sviluppo/index.html": "7e1e3d1dedfbbe613c40928c2cb9067608b025fc",
-    "/sviluppo/main-3L5F4MRE.js": "bafc7595060260c3eda69db655a08a1911b5c337",
+    "/sviluppo/index.html": "1c8a6e7de5cfe9bab4839c0c1742ad80b7178671",
+    "/sviluppo/main-LZEOSLYV.js": "e2fe9cd9a037a6bb70c694b49560db9642e72913",
     "/sviluppo/manifest.webmanifest": "5b052e488c0bfbe4f6afc31f46f1895359cd0ef0",
     "/sviluppo/polyfills-5CFQRCPP.js": "f2241e9a25858f895ce299d15f6f22e849e2fd72",
     "/sviluppo/styles-T6YNM5VD.css": "e8bf6b38679f20b396a0b6e03f0257e9b327676e"
