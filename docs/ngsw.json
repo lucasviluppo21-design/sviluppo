@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1765536783696,
+  "timestamp": 1765548286161,
   "index": "/sviluppo/index.html",
   "assetGroups": [
     {
@@ -14,11 +14,11 @@
         "/sviluppo/chunk-3DX2HYX3.js",
         "/sviluppo/chunk-3MQJB5HQ.js",
         "/sviluppo/chunk-5XEYTCIL.js",
-        "/sviluppo/chunk-NO5NGGK2.js",
-        "/sviluppo/chunk-WLKSXRLX.js",
+        "/sviluppo/chunk-BL37SGO3.js",
+        "/sviluppo/chunk-FW3GKGTX.js",
         "/sviluppo/chunk-WTI2L5DI.js",
         "/sviluppo/index.html",
-        "/sviluppo/main-Q42CUV7I.js",
+        "/sviluppo/main-KMA7ZO3L.js",
         "/sviluppo/polyfills-5CFQRCPP.js",
         "/sviluppo/styles-T6YNM5VD.css"
       ],
@@ -46,11 +46,11 @@
     "/sviluppo/chunk-3DX2HYX3.js": "d0a24423f02c0a5cd1f7d522192e8e4d32fb9cfc",
     "/sviluppo/chunk-3MQJB5HQ.js": "2a3e53ed5d37344f77647b096d263e2980e67a51",
     "/sviluppo/chunk-5XEYTCIL.js": "3a7745cccb32c373bda693a9295e9d7672e1b09e",
-    "/sviluppo/chunk-NO5NGGK2.js": "eee58a802dd93b221cc14453503e0992be0f2180",
-    "/sviluppo/chunk-WLKSXRLX.js": "4a2a10bbe60f943a604b7118b68b49fb2ac7bdc9",
+    "/sviluppo/chunk-BL37SGO3.js": "cb1dfb98a90cb17ce9847ad4a330a2c124b946c5",
+    "/sviluppo/chunk-FW3GKGTX.js": "9289f2587699dd05c0be8c9e30d2484137908b5a",
     "/sviluppo/chunk-WTI2L5DI.js": "07f87a70ea33c6f61a48896d9d5645d0c51f1c4a",
-    "/sviluppo/index.html": "039eca5990e2eea94507de25329822340926c56b",
-    "/sviluppo/main-Q42CUV7I.js": "db733bfd8a3477d81bfb667c23981e6524112464",
+    "/sviluppo/index.html": "b647f6fa09a27c57399c221fe6bc57e9292e2c64",
+    "/sviluppo/main-KMA7ZO3L.js": "d4d5d4432916647251d022e6708453b648b6cb7e",
     "/sviluppo/manifest.webmanifest": "5b052e488c0bfbe4f6afc31f46f1895359cd0ef0",
     "/sviluppo/polyfills-5CFQRCPP.js": "f2241e9a25858f895ce299d15f6f22e849e2fd72",
     "/sviluppo/styles-T6YNM5VD.css": "e8bf6b38679f20b396a0b6e03f0257e9b327676e"
