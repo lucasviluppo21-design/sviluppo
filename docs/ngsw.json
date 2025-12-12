@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1765533345974,
+  "timestamp": 1765536354234,
   "index": "/sviluppo/index.html",
   "assetGroups": [
     {
@@ -19,7 +19,6 @@
         "/sviluppo/chunk-WTI2L5DI.js",
         "/sviluppo/index.html",
         "/sviluppo/main-Q42CUV7I.js",
-        "/sviluppo/manifest.webmanifest",
         "/sviluppo/polyfills-5CFQRCPP.js",
         "/sviluppo/styles-T6YNM5VD.css"
       ],
@@ -34,7 +33,8 @@
       },
       "urls": [
         "/sviluppo/assets/icons/icon-192.png",
-        "/sviluppo/assets/icons/icon-512.png"
+        "/sviluppo/assets/icons/icon-512.png",
+        "/sviluppo/manifest.webmanifest"
       ],
       "patterns": []
     }
