@@ -23,7 +23,7 @@
                 (click)="openWhatsAppWithMessage()">
                 <svg width="28" height="28" viewBox="0 0 32 32" style="vertical-align:middle;">
                   <circle cx="16" cy="16" r="16" fill="#25d366"/>
-                  <path d="M22 20.7c-.4 0-.8.1-1.2.2-.7.2-1.3.3-2 .3l-.4-.2c-2.7-1.1-5.7-3.9-6.6-6.6l-.1-.4c0-.7.1-1.4.3-2l.2-1.2c.1-.4-.1-.8-.3-1.1-.3-.3-.7-.5-1.1-.5h-2c-.5 0-1 .2-1.3.5-.6.6-.9 1.5-.6 2.4C8.5 17 12.4 20.1 16.6 21.2c.9.3 1.8 0 2.4-.6.3-.3.5-.8.5-1.3v-2c0-.4-.2-.8-.5-1.1-.3-.3-.8-.5-1.2-.3z" fill="#fff" />
+                  <path d="M22 20.7c-.4 0-.8.1-1.2.2-.7.2-1.3.3-2 .3l-.4-.2c-2.7-1.1-5.7-3.9-6.6-6.6l-.1-.4c0-.7.1-1.4.3-2l.2-1.2c.1-.4-.1-.8-.3-1.1-.3-.3-.7-.5-1.1-.5h-2c-.5 0-1 .2-1.3.5-.6.6-.9 1.5-.6 2.4C8.5 17 12.4 20.1 16.6 21.2c.9.3 1.8 0 2.4-.6.3-.3.5-.8.5-1.3v-2c0-.4-.2-.8-.5-.1-.3-.3-.8-.5-1.2-.3z" fill="#fff" />
                 </svg>
               </button>
               <span *ngIf="isExpired(user.subscriptionEnd)"
@@ -87,10 +87,7 @@
           <div class="schede-header">
             <h3>Schede di Allenamento</h3>
             <div class="schede-count" *ngIf="filteredCards.length">Totale: {{ filteredCards.length }}</div>
-            <label style="margin-left:16px; font-weight:400;">
-              <input type="checkbox" [(ngModel)]="filterExpiredOnly" />
-              Solo tessere SCADUTE
-            </label>
+            <!-- Checkbox "Solo tessere SCADUTE" rimosso -->
           </div>
           <div class="scheda-box">
             <ng-container *ngIf="filteredCards.length > 0; else schedeVuote">
@@ -100,15 +97,6 @@
                   <span class="scheda-date" style="font-weight:600;">
                     {{ card.date }}<ng-container *ngIf="card.time"> - {{ card.time }}</ng-container>
                   </span>
-                  <label style="margin-left:14px;">
-                    <span style="font-size:.98rem;color:#1742b0;">Scadenza Tessera:&nbsp;</span>
-                    <input 
-                      type="date"
-                      [value]="card.abbonamentoEndDate || ''"
-                      (change)="updateCardAbbonamentoEndDate(i, $event.target.value)"
-                      style="background:#fff; border:none;outline:none; font-size:1rem; color:#1742b0;"
-                    />
-                  </label>
                 </div>
                 <div class="scheda-actions-inline">
                   <button class="btn small" (click)="printCard(i)" title="Stampa PDF">
@@ -130,7 +118,7 @@
       </div>
     </div>
 
-    <!-- Modali di cancellazione e modifica invariati -->
+    <!-- Modali -->
     <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()"></div>
     <div class="modal-confirm-delete" *ngIf="showDeleteModal">
       <div class="modal-confirm-content" (click)="$event.stopPropagation()">

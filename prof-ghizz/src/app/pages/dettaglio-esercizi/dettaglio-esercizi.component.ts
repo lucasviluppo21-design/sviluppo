@@ -1,186 +1,160 @@
-import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
-import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { EserciziService, Exercise } from '../../services/esercizi.service';
 
-// PASSA A API MODULARI DI ANGULARFIRE (no compat)
-import { Firestore, doc, docData, setDoc, getDoc } from '@angular/fire/firestore';
-import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
-import { AuthService } from '../../services/auth.service';
-
-export interface Exercise {
-  id: string;               // usa string per id Firestore
+interface EditExerciseForm {
   name: string;
+  category: string;
+  posizionamento?: string;
+  esecuzione?: string;
+  ritorno?: string;
+  accorgimenti?: string;
+  obiettivo?: string;
   description?: string;
-  image?: string;           // URL pubblico o base64
-  media?: string;           // URL pubblico o base64 (preferibilmente URL)
-  muscles?: string[];
+  muscles: string[];
+  difficulty: 'Facile' | 'Intermedio' | 'Difficile' | string;
+  image?: string | undefined;
+  media?: string | null;
+  notes?: string;
 }
 
 @Component({
   selector: 'app-dettaglio-esercizi',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './dettaglio-esercizi.component.html',
-  styleUrls: ['./dettaglio-esercizi.component.css'],
-  standalone: false
+  styleUrls: ['./dettaglio-esercizi.component.css']
 })
 export class DettaglioEserciziComponent implements OnInit {
-  private firestore = inject(Firestore);
-  private storage = inject(Storage);
+  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
+  exerciseId: string | null = null;
   exercise: Exercise | null = null;
   editMode = false;
-  editForm: Partial<Exercise> = {};
-  notes = '';
+
+  editForm: EditExerciseForm = {
+    name: '',
+    category: '',
+    posizionamento: '',
+    esecuzione: '',
+    ritorno: '',
+    accorgimenti: '',
+    obiettivo: '',
+    description: '',
+    muscles: [],
+    difficulty: 'Intermedio',
+    image: undefined,
+    media: null,
+    notes: '',
+  };
+
   newMuscle = '';
 
-  @ViewChild('fileInput', { static: false }) fileInputRef?: ElementRef<HTMLInputElement>;
+  loading = true;
+  notFound = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private authService: AuthService
+    private eserciziService: EserciziService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    // Prova a prendere lo stato di navigazione
-    const nav = this.router.getCurrentNavigation();
-    const state = (nav?.extras as NavigationExtras)?.state as { exercise?: Exercise } | undefined;
-
-    if (state?.exercise) {
-      // Se è passato via router state, usa quello
-      this.exercise = state.exercise;
-      this.editForm = { ...this.exercise };
-    } else {
-      // Altrimenti carica da Firestore in base all'id nella route
-      const routeIdRaw = this.route.snapshot.paramMap.get('id');
-      const routeId = (routeIdRaw ?? '').toString(); // use string id
-      if (!routeId) {
-        this.exercise = null;
-      } else {
-        const docRef = doc(this.firestore, `exercises/${routeId}`);
-        const snap = await getDoc(docRef);
-        this.exercise = (snap.exists() ? (snap.data() as Exercise) : null);
-        if (this.exercise) {
-          // Assicurati di avere l'id nel modello se non salvato come campo
-          this.exercise.id = routeId;
-          this.editForm = { ...this.exercise };
-        }
-      }
+  async ngOnInit() {
+    this.exerciseId = this.route.snapshot.paramMap.get('id');
+    if (!this.exerciseId) {
+      this.exercise = null;
+      this.notFound = true;
+      this.loading = false;
+      return;
     }
 
-    this.notes = 'Nessuna nota';
-  }
-
-  enableEdit(): void {
-    if (!this.exercise) return;
-    this.editMode = true;
-    this.editForm = { ...this.exercise };
-  }
-
-  cancelEdit(): void {
-    this.editMode = false;
-    this.editForm = this.exercise ? { ...this.exercise } : {};
-  }
-
-  // Salva l’esercizio su Firestore, caricando prima eventuale file su Storage
-  async saveExercise(): Promise<void> {
-    if (!this.exercise) return;
-
-    // Se editForm.media è una base64 (data URL), caricala su Storage per ottenere un URL pubblico
-    let resolvedMediaUrl: string | undefined = this.editForm.media;
-
-    if (resolvedMediaUrl && resolvedMediaUrl.startsWith('data:')) {
-      const filePath = `exercises/${this.exercise.id}/${Date.now()}_media`;
-      const storageRef = ref(this.storage, filePath);
-      const blob = this.dataURLToBlob(resolvedMediaUrl);
-      try {
-        await this.authService.ensureSignedIn();
-        await uploadBytes(storageRef, blob);
-        resolvedMediaUrl = await getDownloadURL(storageRef);
-      } catch (err) {
-        console.error('Error uploading media', err);
-      }
-    }
-
-    // Se editForm.image è una data URL, gestiscila allo stesso modo
-    let resolvedImageUrl: string | undefined = this.editForm.image;
-    if (resolvedImageUrl && resolvedImageUrl.startsWith('data:')) {
-      const filePath = `exercises/${this.exercise.id}/${Date.now()}_image`;
-      const storageRef = ref(this.storage, filePath);
-      const blob = this.dataURLToBlob(resolvedImageUrl);
-      try {
-        await this.authService.ensureSignedIn();
-        await uploadBytes(storageRef, blob);
-        resolvedImageUrl = await getDownloadURL(storageRef);
-      } catch (err) {
-        console.error('Error uploading image', err);
-      }
-    }
-
-    const updated: Exercise = {
-      ...this.exercise,
-      ...this.editForm,
-      image: resolvedMediaUrl ? resolvedMediaUrl : (resolvedImageUrl || this.exercise.image),
-      media: resolvedMediaUrl || this.exercise.media,
-    };
-
-    // Scrivi su Firestore: exercises/{id}
-    const exDoc = doc(this.firestore, `exercises/${updated.id}`);
     try {
-      await this.authService.ensureSignedIn();
-      await setDoc(exDoc, updated, { merge: true });
-    } catch (err) {
-      console.error('Error saving exercise details', err);
+      const allExercises = await this.eserciziService.getAll();
+      const found = allExercises.find(e => e.id === this.exerciseId);
+      if (!found) {
+        this.exercise = null;
+        this.notFound = true;
+      } else {
+        this.exercise = found;
+        this.populateForm(found);
+      }
+    } catch (e) {
+      this.exercise = null;
+      this.notFound = true;
     }
+    this.loading = false;
+  }
 
-    this.exercise = updated;
-    this.editMode = false;
-
-    // Torna alla lista
-    this.router.navigate(['/esercizi'], { state: { refresh: true } });
+  populateForm(ex: Exercise) {
+    this.editForm = {
+      name: ex.name,
+      category: ex.category,
+      posizionamento: (ex as any).posizionamento ?? '',
+      esecuzione: (ex as any).esecuzione ?? '',
+      ritorno: (ex as any).ritorno ?? '',
+      accorgimenti: (ex as any).accorgimenti ?? '',
+      obiettivo: (ex as any).obiettivo ?? '',
+      description: ex.description ?? '',
+      muscles: ex.muscles ?? [],
+      difficulty: (ex.difficulty as 'Facile' | 'Intermedio' | 'Difficile') ?? 'Intermedio',
+      image: ex.image ?? undefined,
+      media: null,
+      notes: (ex as any).notes ?? '',
+    };
   }
 
   backToList(): void {
     this.router.navigate(['/esercizi']);
   }
 
-  onMediaBoxClick(): void {
-    if (!this.editMode) return;
-    this.fileInputRef?.nativeElement?.click();
+  enableEdit(): void { this.editMode = true; }
+  cancelEdit(): void {
+    if (this.exercise) this.populateForm(this.exercise);
+    this.editMode = false;
   }
-
-  // Carica file in memoria come dataURL; verrà convertito in upload su Storage al save
-  onMediaChange(event: Event): void {
-    if (!this.editMode) return;
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => (this.editForm.media = reader.result as string);
-    reader.readAsDataURL(file);
+  async saveExercise(): Promise<void> {
+    if (!this.exercise) return;
+    const payload = {
+      name: this.editForm.name,
+      category: this.editForm.category,
+      posizionamento: this.editForm.posizionamento ?? '',
+      esecuzione: this.editForm.esecuzione ?? '',
+      ritorno: this.editForm.ritorno ?? '',
+      accorgimenti: this.editForm.accorgimenti ?? '',
+      obiettivo: this.editForm.obiettivo ?? '',
+      description: this.editForm.description,
+      muscles: this.editForm.muscles,
+      difficulty: this.editForm.difficulty,
+      image: this.editForm.image ?? undefined,
+      notes: this.editForm.notes ?? '',
+    };
+    await this.eserciziService.update(this.exercise.id, payload);
+    this.exercise = { ...this.exercise, ...payload };
+    this.editMode = false;
   }
 
   addMuscle(): void {
-    const val = (this.newMuscle || '').trim();
-    if (!val) return;
-    const list = Array.isArray(this.editForm.muscles) ? this.editForm.muscles : [];
-    this.editForm.muscles = [...list, val];
-    this.newMuscle = '';
-  }
-
-  removeMuscle(index: number): void {
-    if (!Array.isArray(this.editForm.muscles)) return;
-    this.editForm.muscles = this.editForm.muscles.filter((_, i) => i !== index);
-  }
-
-  // Utility: converti dataURL (base64) in Blob per upload su Storage
-  private dataURLToBlob(dataUrl: string): Blob {
-    const arr = dataUrl.split(',');
-    const mimeMatch = arr[0].match(/:(.*?);/);
-    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
+    const m = this.newMuscle.trim();
+    if (m) {
+      this.editForm.muscles.push(m);
+      this.newMuscle = '';
     }
-    return new Blob([u8arr], { type: mime });
+  }
+  removeMuscle(index: number): void {
+    this.editForm.muscles.splice(index, 1);
+  }
+
+  onMediaBoxClick(): void {
+    if (this.editMode) this.fileInputRef?.nativeElement?.click();
+  }
+
+  onMediaChange(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0] || null;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { this.editForm.media = reader.result as string; };
+    reader.readAsDataURL(file);
   }
 }

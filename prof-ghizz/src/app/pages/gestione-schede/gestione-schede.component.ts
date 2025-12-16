@@ -2,21 +2,20 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { PdfSchedaService } from '../../services/pdf-scheda-service';
 import { AuthService } from '../../services/auth.service';
-
-// Usa le API MODULARI di AngularFire
 import {
   Firestore,
   collection,
   doc,
   setDoc,
-  updateDoc,
   addDoc,
   getDocs,
+  getDoc,
   query,
   where,
-  orderBy
+  orderBy,
+  updateDoc
 } from '@angular/fire/firestore';
-import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { User, WorkoutCard } from '../../models/user.model';
 
 interface ScheduleExercise {
   id: string;
@@ -44,20 +43,7 @@ interface Scheda {
   dataInizio: string;
   orario?: string;
   giorni: Giorno[];
-  logoPreviewUrl?: string | null;
   createdAt?: number;
-}
-interface StoredExercise { id: string; name: string; category: string; image?: string; }
-interface StoredCategory { id: string; name: string; image?: string; selected?: boolean; }
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  signupDate: string;
-  status: string;
-  phone?: string;
-  avatarUrl?: string;
-  cards?: Array<{ title: string; date: string; time?: string }>;
 }
 
 @Component({
@@ -68,14 +54,12 @@ interface User {
 })
 export class GestioneSchedeComponent implements OnInit {
   private firestore = inject(Firestore);
-  private storage = inject(Storage);
 
   constructor(
     private router: Router,
     private pdfSchedaService: PdfSchedaService,
     private authService: AuthService
   ) {}
-  
 
   cliente: User | null = null;
   scheda: Scheda = {
@@ -84,14 +68,17 @@ export class GestioneSchedeComponent implements OnInit {
     durata: '4 Settimane',
     dataInizio: '',
     orario: '',
-    giorni: [{ nome: 'Giorno 1', esercizi: [] }],
-    logoPreviewUrl: null
+    giorni: [{ nome: 'Giorno 1', esercizi: [] }]
   };
+
+  // Logo locale, NON salvato nel DB/Storage
   logoPreviewUrl: string | null = null;
+  tempLogoFile: File | null = null;
+
   giornoAttivoIndex = 0;
-  esercizi: StoredExercise[] = [];
-  categorie: StoredCategory[] = [];
-  eserciziFiltrati: StoredExercise[] = [];
+  esercizi: Array<{ id: string; name: string; category: string; image?: string }> = [];
+  categorie: Array<{ id: string; name: string; image?: string; selected?: boolean }> = [];
+  eserciziFiltrati: Array<{ id: string; name: string; category: string; image?: string }> = [];
   searchTerm = '';
   filterCategoria = '';
   allUsers: User[] = [];
@@ -101,8 +88,6 @@ export class GestioneSchedeComponent implements OnInit {
   shareModalOpen = false;
   generatedLink = '';
   oggi = new Date().toISOString().split('T')[0];
-  private _pdfBlob: Blob | null = null;
-  private _pdfFileName: string = '';
   pdfBlobUrl: string | null = null;
 
   currentExercisePage = 0;
@@ -134,7 +119,6 @@ export class GestioneSchedeComponent implements OnInit {
     if (!this.scheda.dataInizio) this.scheda.dataInizio = this.oggi;
     if (!this.scheda.orario) this.scheda.orario = this.normalizeTimeToHMS(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     this.generateLink();
-    this.logoPreviewUrl = this.scheda.logoPreviewUrl || null;
   }
 
   async loadUsers() {
@@ -151,13 +135,13 @@ export class GestioneSchedeComponent implements OnInit {
   async loadExercises() {
     const exCol = collection(this.firestore, 'exercises');
     const snap = await getDocs(exCol);
-    this.esercizi = snap.docs.map(d => ({ id: d.id, ...d.data() } as StoredExercise));
+    this.esercizi = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
   }
 
   async loadCategories() {
     const catCol = collection(this.firestore, 'categories');
     const snap = await getDocs(catCol);
-    this.categorie = snap.docs.map(d => ({ id: d.id, selected: false, ...d.data() } as StoredCategory));
+    this.categorie = snap.docs.map(d => ({ id: d.id, selected: false, ...d.data() } as any));
   }
 
   async loadExistingSchedule() {
@@ -175,15 +159,13 @@ export class GestioneSchedeComponent implements OnInit {
       if (!this.scheda.giorni || this.scheda.giorni.length === 0) {
         this.scheda.giorni = [{ nome: 'Giorno 1', esercizi: [] }];
       }
-      this.logoPreviewUrl = this.scheda.logoPreviewUrl || null;
-      if (!this.scheda.orario) this.scheda.orario = this.normalizeTimeToHMS(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     }
   }
 
   filterUsers() {
     const term = this.userSearch.toLowerCase().trim();
     this.filteredUserList = this.allUsers.filter(u =>
-      u.name.toLowerCase().includes(term) || (u.email || '').toLowerCase().includes(term)
+      (u.name || '').toLowerCase().includes(term) || (u.email || '').toLowerCase().includes(term)
     );
   }
   openUserPicker() { this.showUserPicker = true; this.userSearch = ''; this.filterUsers(); }
@@ -221,10 +203,10 @@ export class GestioneSchedeComponent implements OnInit {
     this.persistSchedule();
   }
 
-  createScheduleExercise(e: StoredExercise): ScheduleExercise {
+  createScheduleExercise(e: { id: string; name: string; category: string; image?: string }): ScheduleExercise {
     return { id: e.id, nome: e.name, image: e.image, categoria: e.category, serie: 3, ripetizioni: 10, minuti: 0, secondi: 0, caricoKg: 0, note: '' };
   }
-  aggiungiEsercizioAlGiorno(e: StoredExercise) {
+  aggiungiEsercizioAlGiorno(e: { id: string; name: string; category: string; image?: string }) {
     const g = this.scheda.giorni[this.giornoAttivoIndex];
     g.esercizi.push(this.createScheduleExercise(e));
     this.persistSchedule();
@@ -238,7 +220,7 @@ export class GestioneSchedeComponent implements OnInit {
   filtraEsercizi() {
     const term = this.searchTerm.toLowerCase().trim();
     this.eserciziFiltrati = this.esercizi.filter(ex => {
-      const nameMatch = ex.name.toLowerCase().includes(term);
+      const nameMatch = (ex.name || '').toLowerCase().includes(term);
       const catMatch = this.filterCategoria ? ex.category === this.filterCategoria : true;
       return nameMatch && catMatch;
     });
@@ -246,13 +228,16 @@ export class GestioneSchedeComponent implements OnInit {
 
   async salvaScheda() {
     await this.authService.ensureSignedIn();
-    this.scheda.logoPreviewUrl = this.logoPreviewUrl;
     const now = new Date();
     this.scheda.orario = this.normalizeTimeToHMS(now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     this.scheda.dataInizio = now.toISOString().split('T')[0];
+
     await this.persistSchedule();
+
+    const pdfBase64 = await this.buildPdfBase64();
+    await this.appendCardToUser(this.scheda.dataInizio, this.scheda.orario!, pdfBase64);
+
     this.generateLink();
-    await this.appendCardToUser(this.scheda.dataInizio, this.scheda.orario);
     this.showSavedMsg = true;
     this.savedMsgText = 'Scheda salvata';
     setTimeout(() => { this.showSavedMsg = false; }, 2500);
@@ -266,20 +251,44 @@ export class GestioneSchedeComponent implements OnInit {
     return `${m[1]}:${m[2]}:${ss}`;
   }
 
-  private async appendCardToUser(dataInizio: string, orario: string) {
+  private async buildPdfBase64(): Promise<string> {
+    try {
+      const docPdf: any = await this.pdfSchedaService.buildDoc(this.scheda, this.cliente, this.logoPreviewUrl);
+      const dataUri: string = docPdf.output('datauristring');
+      const base64 = dataUri.split(',')[1] || '';
+      return base64;
+    } catch {
+      return '';
+    }
+  }
+
+  private async appendCardToUser(dataInizio: string, orario: string, pdfBase64: string) {
     if (!this.cliente || !this.scheda) return;
     await this.authService.ensureSignedIn();
     const titolo = this.computeScheduleTitle();
     const data = this.formatDateIT(dataInizio);
     const time = this.normalizeTimeToHMS(orario);
-    const nuovaCard = { title: titolo, date: data!, time: time };
-    const userDoc = doc(this.firestore, `users/${this.cliente.id}`);
+
+    const MAX_BASE64 = 850_000; // ~0.85MB per restare sotto 1MB limite Firestore doc
+    const nuovaCard: WorkoutCard & { pdfBase64?: string } = {
+      title: titolo,
+      date: data || '',
+      time
+    };
+    if (pdfBase64 && pdfBase64.length <= MAX_BASE64) {
+      nuovaCard.pdfBase64 = pdfBase64;
+    }
+
+    const userRef = doc(this.firestore, `users/${this.cliente.id}`);
     try {
-      // Ottieni dati esistenti dell'utente (con campi extra)
-      const snap = await getDocs(query(collection(this.firestore, 'users'), where('id', '==', this.cliente.id)));
-      const user = snap.docs[0]?.data() as User;
-      const existingCards = Array.isArray(user?.cards) ? user.cards : [];
-      await updateDoc(userDoc, { cards: [nuovaCard, ...existingCards] });
+      const snap = await getDoc(userRef);
+      const existing = (snap.exists() && Array.isArray((snap.data() as any).cards))
+        ? (snap.data() as any).cards as WorkoutCard[]
+        : [];
+      // aggiunge in fondo alla lista senza sovrascrivere quelle esistenti
+      const updated = [...existing, nuovaCard];
+      await updateDoc(userRef, { cards: updated });
+      if (this.cliente) this.cliente.cards = updated;
     } catch (err) {
       console.error('Error appending card to user', err);
     }
@@ -299,11 +308,9 @@ export class GestioneSchedeComponent implements OnInit {
     return `${m[3]}/${m[2]}/${m[1]}`;
   }
 
-  // Persisti la scheda su Firestore (storico)
   async persistSchedule() {
     if (!this.cliente) return;
     await this.authService.ensureSignedIn();
-    this.scheda.logoPreviewUrl = this.logoPreviewUrl;
     const data: Scheda = {
       ...this.scheda,
       userId: this.cliente.id,
@@ -339,10 +346,6 @@ export class GestioneSchedeComponent implements OnInit {
     window.open(this.pdfBlobUrl, '_blank');
   }
 
-  async stampa() {
-    await this.pdfSchedaService.buildAndSavePdf(this.scheda, this.cliente, this.logoPreviewUrl);
-  }
-
   openShareModal() { this.generateLink(); this.shareModalOpen = true; }
   closeShareModal() { this.shareModalOpen = false; }
   generateLink() {
@@ -367,32 +370,6 @@ export class GestioneSchedeComponent implements OnInit {
       }))
     }));
     this.generatedLink = `${base}/scheda-share?data=${summary}`;
-  }
-
-  shareEmail(provider: 'gmail' | 'outlook') {
-    if (!this.cliente) return;
-    const subject = 'Scheda Allenamento';
-    const bodyLines = [
-      `Ciao ${this.cliente.name}`,
-      `Livello: ${this.scheda.livello}`,
-      `Durata: ${this.scheda.durata}`,
-      `Inizio: ${this.scheda.dataInizio}`,
-      '',
-      ...this.scheda.giorni.map(g =>
-        g.nome + ': ' + g.esercizi.map(e => `${e.nome} ${e.serie}x${e.ripetizioni}`).join(', ')
-      ),
-      '',
-      `Link scheda: ${this.generatedLink}`
-    ];
-    const body = encodeURIComponent(bodyLines.join('\n'));
-    const subj = encodeURIComponent(subject);
-    let url = '';
-    if (provider === 'gmail') {
-      url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(this.cliente.email)}&su=${subj}&body=${body}`;
-    } else {
-      url = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(this.cliente.email)}&subject=${subj}&body=${body}`;
-    }
-    window.open(url, '_blank');
   }
 
   copyShareLink() {
@@ -427,107 +404,15 @@ export class GestioneSchedeComponent implements OnInit {
     this.persistSchedule();
   }
 
-  async onLogoSelect(event: any): Promise<void> {
+  onLogoSelect(event: any): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const filePath = `logos/${this.scheda.userId || 'generic'}/${Date.now()}_logo`;
-      const storageRef = ref(this.storage, filePath);
-      try {
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        this.logoPreviewUrl = url || null;
-        this.scheda.logoPreviewUrl = this.logoPreviewUrl;
-        await this.persistSchedule();
-      } catch (err) {
-        console.error('Error uploading logo or persisting schedule', err);
-      }
-    }
-  }
-
-  private async getScaledImageData(src?: string, w = 40, h = 30): Promise<string | undefined> {
-    if (!src) return;
-    return await new Promise<string | undefined>(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = w * 2;
-        c.height = h * 2;
-        const ctx = c.getContext('2d')!;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, c.width, c.height);
-        const r = img.width / img.height;
-        const cr = c.width / c.height;
-        let dw: number; let dh: number;
-        if (r > cr) {
-            dh = c.height;
-            dw = dh * r;
-        } else {
-            dw = c.width;
-            dh = dw / r;
-        }
-        ctx.drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
-        resolve(c.toDataURL('image/jpeg', 0.9));
-      };
-      img.onerror = () => resolve(undefined);
-      img.crossOrigin = 'anonymous';
-      img.src = src;
-    });
-  }
-
-  private wrapText(doc: any, text: string, maxWidth: number): string[] {
-    if (!text) return [];
-    const words = text.split(/\s+/);
-    const lines: string[] = [];
-    let current = '';
-    for (const w of words) {
-      const test = current ? current + ' ' + w : w;
-      if (doc.getTextWidth(test) > maxWidth && current) {
-        lines.push(current);
-        current = w;
-      } else {
-        current = test;
-      }
-    }
-    if (current) lines.push(current);
-    return lines;
-  }
-
-  private safeString(v?: string): string {
-    return (v || '').trim().replace(/\s+/g, '');
-  }
-
-  private async getScaledImageDataForPdfHQ(src?: string, w = 40, h = 30): Promise<string | undefined> {
-    if (!src) return;
-    return await new Promise<string | undefined>((resolve) => {
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const scale = 4;
-        const c = document.createElement('canvas');
-        c.width = Math.round(w * scale);
-        c.height = Math.round(h * scale);
-        const ctx = c.getContext('2d', { alpha: false });
-        if (!ctx) return resolve(undefined);
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, c.width, c.height);
-        const cRatio = c.width / c.height;
-        const iRatio = img.width / img.height;
-        let sx=0, sy=0, sWidth=img.width, sHeight=img.height;
-        if (iRatio > cRatio) {
-          sWidth = img.height * cRatio;
-          sx = (img.width - sWidth) / 2;
-        } else {
-          sHeight = img.width / cRatio;
-          sy = (img.height - sHeight) / 2;
-        }
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, c.width, c.height);
-        resolve(c.toDataURL('image/png', 1));
-      };
-      img.onerror = () => resolve(undefined);
-      img.src = src;
-    });
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    this.tempLogoFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.logoPreviewUrl = reader.result as string;
+    };
+    reader.readAsDataURL(file);
   }
 }

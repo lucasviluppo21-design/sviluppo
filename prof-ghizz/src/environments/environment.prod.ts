@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  version: '1.1', // aggiorna qui quando fai il deploy di produzione
   firebase: {
     apiKey: "AIzaSyCQgTWYANjjhTl5n3se4MLhYAkGX_um2ag",
     authDomain: "gymcardsapp.firebaseapp.com",

@@ -2,6 +2,7 @@
   <div class="anagrafica-content align-left">
     <div class="actions-header responsive-header">
       <button class="btn primary" (click)="openModal()">Cliente</button>
+
       <div class="header-controls">
         <div class="searchbar">
           <input
@@ -13,141 +14,143 @@
           <button class="icon-btn" title="Cerca" (click)="onSearchChange()">
             <span class="material-icons">search</span>
           </button>
-          <button class="icon-btn" title="Filtri" (click)="toggleFilters()" [ngClass]="{'active': showFilters}">
+          <button
+            class="icon-btn"
+            title="Filtri"
+            (click)="toggleFilters()"
+            [ngClass]="{ active: showFilters }"
+            aria-expanded="{{ showFilters }}"
+          >
             <span class="material-icons">filter_list</span>
           </button>
-        </div>
-        <div *ngIf="showFilters" class="filters-panel">
-          <label>
-            Stato:
-            <select [(ngModel)]="filterStatus" (change)="applyFilters()">
-              <option value="">Tutti</option>
-              <option value="Attivo">Attivo</option>
-              <option value="Inattivo">Inattivo</option>
-            </select>
-          </label>
-          <label>
-            Email:
-            <select [(ngModel)]="filterHasEmail" (change)="applyFilters()">
-              <option value="">Tutte</option>
-              <option value="with">Solo con email</option>
-              <option value="without">Solo senza email</option>
-            </select>
-          </label>
-          <label>
-            Tessera:
-            <select [(ngModel)]="filterTessera" (change)="applyFilters()" class="tessera-select">
-              <option value="">Tutte</option>
-              <option value="attiva">Attive</option>
-              <option value="scaduta">Scadute</option>
-            </select>
-          </label>
         </div>
       </div>
     </div>
 
-    <div class="table-outer-center">
-      <table class="user-table">
-        <colgroup>
-          <col style="width: 30%;">
-          <col style="width: 16%;">
-          <col style="width: 16%;">
-          <col style="width: 13%;">
-          <col style="width: 12%;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th class="align-left">Cliente</th>
-            <th class="align-left">Data Iscrizione</th>
-            <th class="align-left">Email</th>
-            <th class="align-left">Stato</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of filteredUsers">
-            <td class="user-cell">
-              <div class="user-card-row">
-                <div class="user-avatar">
-                  <img
-                    class="avatar-img"
-                    [src]="user.avatarUrl"
-                    [alt]="user.name"
-                    *ngIf="user.avatarUrl; else defaultAvatarRow"
-                  />
-                  <ng-template #defaultAvatarRow>
-                    <span class="avatar-placeholder material-icons">person</span>
-                  </ng-template>
-                </div>
-                <div class="user-info-main">
-                  <div class="user-name">{{ user.name }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="user-signup">
-              <span class="user-date">
-                <span class="material-icons calendar-icon">event</span>
-                {{ user.signupDate }}
-              </span>
-            </td>
-            <td class="user-email-table">
-              <span class="user-email">{{ user.email }}</span>
-            </td>
-            <td class="user-status-actions">
-              <div class="status-action-flex left-align">
-                <span
-                  class="status-label"
-                  [ngClass]="{
-                    active: user.status === 'Attivo',
-                    inactive: user.status !== 'Attivo'
-                  }"
-                  >{{ user.status }}</span
-                >
-              </div>
-            </td>
-            <td>
-              <a
-                class="icon-btn"
-                title="Dettaglio"
-                aria-label="Dettaglio {{ user.name }}"
-                [routerLink]="['/anagrafica', user.id]"
-              >
-                <span class="material-icons">visibility</span>
-              </a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Layout a 2 colonne: tabella + aside filtri -->
+    <div class="list-layout" [class.has-filters]="showFilters">
+      <div class="list-main">
+        <div class="table-outer-center">
+          <table class="user-table">
+            <colgroup>
+              <col style="width: 30%" />
+              <col style="width: 16%" />
+              <col style="width: 16%" />
+              <col style="width: 13%" />
+              <col style="width: 12%" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="align-left">Cliente</th>
+                <th class="align-left">Data Iscrizione</th>
+                <th class="align-left">Email</th>
+                <th class="align-left">Stato</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of filteredUsers">
+                <td class="user-cell">
+                  <div class="user-card-row">
+                    <div class="user-avatar">
+                      <img
+                        class="avatar-img"
+                        [src]="user.avatarUrl"
+                        [alt]="user.name"
+                        *ngIf="user.avatarUrl; else defaultAvatarRow"
+                      />
+                      <ng-template #defaultAvatarRow>
+                        <span class="avatar-placeholder material-icons">person</span>
+                      </ng-template>
+                    </div>
+                    <div class="user-info-main">
+                      <div class="user-name">{{ user.name }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="user-signup">
+                  <span class="user-date">
+                    <span class="material-icons calendar-icon">event</span>
+                    {{ user.signupDate }}
+                  </span>
+                </td>
+                <td class="user-email-table">
+                  <span class="user-email">{{ user.email }}</span>
+                </td>
+                <td class="user-status-actions">
+                  <div class="status-action-flex left-align">
+                    <span
+                      class="status-label"
+                      [ngClass]="{
+                        active: user.status === 'Attivo',
+                        inactive: user.status !== 'Attivo'
+                      }"
+                      >{{ user.status }}</span
+                    >
+                  </div>
+                </td>
+                <td>
+                  <a
+                    class="icon-btn"
+                    title="Dettaglio"
+                    aria-label="Dettaglio {{ user.name }}"
+                    [routerLink]="['/anagrafica', user.id]"
+                  >
+                    <span class="material-icons">visibility</span>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Aside filtri a destra, uno sotto l'altro -->
+      <aside class="filters-aside" *ngIf="showFilters">
+        <div class="filters-title">Filtri</div>
+
+        <label class="filter-group">
+          <span class="filter-label">Stato</span>
+          <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+            <option value="">Tutti</option>
+            <option value="Attivo">Attivo</option>
+            <option value="Inattivo">Inattivo</option>
+          </select>
+        </label>
+
+        <label class="filter-group">
+          <span class="filter-label">Email</span>
+          <select [(ngModel)]="filterHasEmail" (change)="applyFilters()">
+            <option value="">Tutte</option>
+            <option value="with">Solo con email</option>
+            <option value="without">Solo senza email</option>
+          </select>
+        </label>
+
+        <label class="filter-group">
+          <span class="filter-label">Tessera</span>
+          <select [(ngModel)]="filterTessera" (change)="applyFilters()" class="tessera-select">
+            <option value="">Tutte</option>
+            <option value="attiva">Attive</option>
+            <option value="scaduta">Scadute</option>
+          </select>
+        </label>
+      </aside>
     </div>
 
-    <!-- MODALE CLIENTE -->
+    <!-- MODALE CLIENTE (ridotta) -->
     <div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()"></div>
     <div class="modal-nuovo-utente" *ngIf="modalOpen">
-      <form
-        (ngSubmit)="registerUser()"
-        class="modal-form"
-        (click)="$event.stopPropagation()"
-        #modalForm="ngForm"
-      >
+      <form (ngSubmit)="registerUser()" class="modal-form" (click)="$event.stopPropagation()" #modalForm="ngForm">
         <h2>Registra Cliente</h2>
         <div class="avatar-modal-section">
           <div class="avatar-upload-box">
-            <input
-              #avatarInput
-              type="file"
-              accept="image/*"
-              (change)="onAvatarChange($event)"
-              hidden
-            />
+            <input #avatarInput type="file" accept="image/*" (change)="onAvatarChange($event)" hidden />
             <ng-container *ngIf="form.avatar; else showIcon">
               <img [src]="form.avatar" alt="Avatar" class="avatar-img-preview" />
             </ng-container>
             <ng-template #showIcon>
-              <button
-                type="button"
-                class="avatar-add-btn"
-                (click)="triggerAvatarInput(avatarInput)"
-              >
+              <button type="button" class="avatar-add-btn" (click)="triggerAvatarInput(avatarInput)">
                 <span class="material-icons avatar-add">photo_camera</span>
               </button>
             </ng-template>
@@ -156,140 +159,56 @@
             Caricamento immagine in corso...
           </div>
         </div>
+
         <div class="modal-fields modal-fields-2col">
           <div class="modal-form-row">
             <div class="form-group">
               <label class="field-label">Nome</label>
-              <input
-                type="text"
-                placeholder="Nome"
-                [(ngModel)]="form.nome"
-                name="nome"
-                autocomplete="off"
-                required
-              />
+              <input type="text" placeholder="Nome" [(ngModel)]="form.nome" name="nome" autocomplete="off" required />
             </div>
             <div class="form-group">
               <label class="field-label">Cognome</label>
-              <input
-                type="text"
-                placeholder="Cognome"
-                [(ngModel)]="form.cognome"
-                name="cognome"
-                autocomplete="off"
-                required
-              />
+              <input type="text" placeholder="Cognome" [(ngModel)]="form.cognome" name="cognome" autocomplete="off" required />
             </div>
           </div>
+
           <div class="modal-form-row">
             <div class="form-group">
               <label class="field-label">Email</label>
-              <input
-                type="email"
-                placeholder="Email"
-                [(ngModel)]="form.emailModal"
-                name="emailModal"
-                autocomplete="off"
-                required
-              />
+              <input type="email" placeholder="Email" [(ngModel)]="form.emailModal" name="emailModal" autocomplete="off" required />
             </div>
             <div class="form-group">
               <label class="field-label">Numero di Telefono</label>
-              <input
-                type="text"
-                placeholder="Numero di Telefono"
-                [(ngModel)]="form.phone"
-                name="phone"
-              />
+              <input type="text" placeholder="Numero di Telefono" [(ngModel)]="form.phone" name="phone" />
             </div>
           </div>
+
           <div class="modal-form-row">
             <div class="form-group">
-              <label class="field-label flex-label calendar-label"
-                ><span class="material-icons calendar-icon">event</span>
-                Data Iscrizione</label
-              >
-              <input
-                type="date"
-                [(ngModel)]="form.signupDateModal"
-                name="signupDateModal"
-              />
+              <label class="field-label flex-label calendar-label">
+                <span class="material-icons calendar-icon">event</span>
+                Data Iscrizione
+              </label>
+              <input type="date" [(ngModel)]="form.signupDateModal" name="signupDateModal" />
             </div>
             <div class="form-group form-group-switch">
               <label class="field-label" style="opacity:0;user-select:none;">-</label>
               <div class="modal-stato-switch">
                 <label class="switch">
-                  <input
-                    type="checkbox"
-                    [(ngModel)]="form.isActive"
-                    name="isActive"
-                  />
+                  <input type="checkbox" [(ngModel)]="form.isActive" name="isActive" />
                   <span class="slider"></span>
                 </label>
-                <span
-                  class="modal-stato"
-                  [class.active]="form.isActive"
-                  [class.inactive]="!form.isActive"
-                  >{{ form.isActive ? 'Attivo' : 'Inattivo' }}</span
-                >
+                <span class="modal-stato" [class.active]="form.isActive" [class.inactive]="!form.isActive">
+                  {{ form.isActive ? 'Attivo' : 'Inattivo' }}
+                </span>
               </div>
             </div>
           </div>
-          <div class="modal-form-row">
-            <div class="form-group">
-              <label class="field-label">Scadenza Tessera</label>
-              <input type="date" [(ngModel)]="form.tesseraEnd" name="tesseraEnd" />
-            </div>
-            <div class="form-group">
-              <label class="field-label">Data di nascita</label>
-              <input type="date" [(ngModel)]="form.birthDate" name="birthDate" />
-            </div>
-          </div>
-          <div class="modal-form-row">
-            <div class="form-group">
-              <label class="field-label">Genere</label>
-              <select [(ngModel)]="form.gender" name="gender">
-                <option value="">-</option>
-                <option value="Uomo">Uomo</option>
-                <option value="Donna">Donna</option>
-                <option value="Altro">Altro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="field-label">Indirizzo</label>
-              <input type="text" [(ngModel)]="form.address" name="address" placeholder="Indirizzo" />
-            </div>
-          </div>
-          <div class="modal-form-row">
-            <div class="form-group">
-              <label class="field-label">Città</label>
-              <input type="text" [(ngModel)]="form.city" name="city" placeholder="Città" />
-            </div>
-            <div class="form-group">
-              <label class="field-label">CAP</label>
-              <input type="text" [(ngModel)]="form.cap" name="cap" placeholder="CAP" />
-            </div>
-          </div>
-          <div class="modal-form-row">
-            <div class="form-group" style="flex:1;">
-              <label class="field-label">Note personali</label>
-              <textarea
-                placeholder="Note personali"
-                [(ngModel)]="form.personalNotes"
-                name="personalNotes"
-              ></textarea>
-            </div>
-          </div>
         </div>
+
         <div class="modal-actions">
           <button type="button" class="btn cancel" (click)="closeModal()">Annulla</button>
-          <button
-            type="submit"
-            class="btn primary"
-            [disabled]="modalForm.invalid || avatarLoading"
-          >
-            Registra Cliente
-          </button>
+          <button type="submit" class="btn primary" [disabled]="modalForm.invalid || avatarLoading">Registra Cliente</button>
         </div>
       </form>
     </div>

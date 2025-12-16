@@ -171,7 +171,6 @@ export class PdfSchedaService {
           doc.text(ex.nome || '', marginX + 2, y + rowTabH * 0.68, { align: 'left' });
           doc.setFont('Helvetica', 'normal');
           doc.setFontSize(9.8);
-          const cellNoteW = valueColW - 3;
           doc.text(ex.note, marginX + nameColW + 2, y + rowTabH * 0.68, { align: 'left' });
           y += rowTabH;
         }
@@ -203,7 +202,9 @@ export class PdfSchedaService {
       }
       y = yGrid + 6;
     }
-    if (y + barraH + 18 * rowH > pageH - safetyBottom) {
+
+    // NOTE FINALI COME TABELLA RIGHE (no griglia)
+    if (y + barraH + 18 * 7 > pageH - safetyBottom) {
       doc.addPage();
       y = 18;
     }
@@ -215,17 +216,27 @@ export class PdfSchedaService {
     doc.text('Note personali', marginX + 2.5, y + barraH / 1.7, { align: 'left' });
     doc.setTextColor('#000000');
     y += barraH + 2;
-    let yGrid = y;
-    for (let r = 0; r < 18; r++) {
-      if (yGrid + rowH > pageH - safetyBottom) {
+
+    // Tabella: solo righe, niente colonne o quadrati
+    const note = cliente?.personalNotes ?? scheda?.personalNotes ?? "";
+    const splitted = typeof note === "string" && note.trim() ? note.split('\n') : [];
+    const maxFinaleRows = 18;
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(11);
+    const lineHeight = 7;
+    for (let r = 0; r < maxFinaleRows; r++) {
+      if (y + lineHeight > pageH - safetyBottom) {
         doc.addPage();
-        yGrid = 18;
+        y = 18;
       }
-      for (let c = 0; c < colCount; c++) {
-        doc.rect(marginX + c * colW, yGrid, colW, rowH, 'S');
+      doc.line(marginX, y, marginX + contentW, y); // solo riga orizzontale
+      if (splitted[r]) {
+        doc.text(splitted[r], marginX + 2.5, y + lineHeight * 0.68, { align: 'left' });
       }
-      yGrid += rowH;
+      y += lineHeight;
     }
+    doc.line(marginX, y, marginX + contentW, y); // ultima riga chiusura
+
     return doc;
   }
 

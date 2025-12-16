@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ImageService {
-  async compressAndConvertToBase64(file: File, maxSizeKB = 1000, size = 256): Promise<string> {
+  async compressAndConvertToBase64(
+    file: File,
+    maxSizeKB = 1000,
+    size = 256
+  ): Promise<string> {
     const img = document.createElement('img');
     const reader = new FileReader();
 

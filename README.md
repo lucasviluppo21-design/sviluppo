@@ -38,4 +38,6 @@ https://firebase.google.com/
 
 https://console.cloud.google.com/storage/browser (attivazione storage)
 
+tessera scaduta due tre giorni prima 
+
 

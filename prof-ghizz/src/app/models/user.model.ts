@@ -3,6 +3,7 @@ export interface WorkoutCard {
   date: string;
   time?: string;
   abbonamentoEndDate?: string;
+  pdfBase64?: string; // Stringa base64 del PDF della scheda
 }
 
 export interface User {
@@ -22,6 +23,6 @@ export interface User {
   cap?: string;
   subscriptionEnd?: string;
   cards?: WorkoutCard[];
-  schedaEnd?: string; 
-  tesseraEnd?: string; // <--- questa
+  schedaEnd?: string;
+  tesseraEnd?: string;
 }

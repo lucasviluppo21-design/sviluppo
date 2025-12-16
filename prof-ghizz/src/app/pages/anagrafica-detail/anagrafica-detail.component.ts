@@ -5,7 +5,7 @@ import { PdfSchedaService } from '../../services/pdf-scheda-service';
 import { Firestore, doc, docData, updateDoc, deleteDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../services/auth.service';
 import { User, WorkoutCard } from '../../models/user.model';
-import { ImageService } from '../../services/image.service'; // aggiungi questa importazione!
+import { ImageService } from '../../services/image.service';
 
 @Component({
   selector: 'app-anagrafica-detail',
@@ -15,20 +15,20 @@ import { ImageService } from '../../services/image.service'; // aggiungi questa 
 })
 export class AnagraficaDetailComponent implements OnInit, OnDestroy {
   private firestore = inject(Firestore);
+  private imageService = inject(ImageService);
 
   user?: User;
   showEditModal = false;
   showDeleteModal = false;
-  editForm: Partial<User & { avatarFile?: File }> = {}; // aggiorna qui!
+  editForm: Partial<User & { avatarFile?: File }> = {};
   nome = '';
   cognome = '';
   userId: string = '';
   userSub?: Subscription;
   avatarLoading: boolean = false;
+
   filterExpiredOnly: boolean = false;
   today: string = new Date().toISOString().substring(0, 10);
-
-  private imageService = inject(ImageService);
 
   constructor(
     private route: ActivatedRoute,
@@ -94,6 +94,11 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
     return new Date(yyyy, mm, dd, hh, min, ss);
   }
 
+  isExpired(subscriptionEnd?: string): boolean {
+    if (!subscriptionEnd) return false;
+    return subscriptionEnd <= this.today;
+  }
+
   async deleteCard(cardIndex: number) {
     if (!this.user || !this.user.id) return;
     const cards = Array.isArray(this.user.cards) ? [...this.user.cards] : [];
@@ -130,7 +135,6 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
     this.avatarLoading = false;
   }
 
-  // Modifica: NON storage, anteprima locale base64!
   async onAvatarChange(event: any): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (!input.files || !input.files[0]) return;
@@ -186,8 +190,28 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
 
   async printCard(index: number): Promise<void> {
     if (!this.user || !this.user.cards || !this.user.cards[index]) return;
+    const card = this.user.cards[index] as WorkoutCard;
+
+    if (card.pdfBase64 && card.pdfBase64.length > 0) {
+      try {
+        const byteCharacters = atob(card.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        return;
+      } catch (err) {
+        console.error('Errore apertura PDF da base64, fallback al builder', err);
+      }
+    }
+
     try {
-      await this.pdfSchedaService.buildAndSavePdf(this.user.cards[index], this.user);
+      await this.pdfSchedaService.buildAndSavePdf(card, this.user);
     } catch (err) {
       console.error('Errore durante la stampa della scheda', err);
       alert('Errore durante la stampa della scheda');
@@ -248,14 +272,9 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/anagrafica']);
   }
 
-  isExpired(subscriptionEnd?: string): boolean {
-    if (!subscriptionEnd) return false;
-    return subscriptionEnd <= this.today;
-  }
-
   get filteredCards(): WorkoutCard[] {
     if (!this.user?.cards) return [];
-    if (!this.filterExpiredOnly) return this.user.cards;
-    return this.user.cards.filter(card => card.abbonamentoEndDate && card.abbonamentoEndDate <= this.today);
+    if (!this.filterExpiredOnly) return this.user.cards as WorkoutCard[];
+    return (this.user.cards as WorkoutCard[]).filter(card => card.abbonamentoEndDate && card.abbonamentoEndDate <= this.today);
   }
 }

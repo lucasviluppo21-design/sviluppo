@@ -1,8 +1,7 @@
-import { NgModule } from '@angular/core';
+import { NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -10,11 +9,13 @@ import { AppRoutingModule } from './app-routing.module';
 import { HeaderComponent } from './layout/header.component';
 import { SidebarComponent } from './layout/sidebar.component';
 import { HomeComponent } from './pages/home/home.component';
-import { EserciziComponent } from './pages/esercizi/esercizi.component';
 import { AnagraficaComponent } from './pages/anagrafica/anagrafica.component';
 import { AnagraficaListComponent } from './pages/anagrafica-list/anagrafica-list.component';
 import { AnagraficaDetailComponent } from './pages/anagrafica-detail/anagrafica-detail.component';
 import { GestioneSchedeComponent } from './pages/gestione-schede/gestione-schede.component';
+
+// Standalone components: si importano, NON si dichiarano
+import { EserciziComponent } from './pages/esercizi/esercizi.component';
 import { DettaglioEserciziComponent } from './pages/dettaglio-esercizi/dettaglio-esercizi.component';
 
 import { FirebaseService } from './services/firebase.service';
@@ -29,6 +30,7 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideStorage, getStorage } from '@angular/fire/storage';
 import { provideAnalytics, getAnalytics } from '@angular/fire/analytics';
+import { ServiceWorkerModule } from '@angular/service-worker';
 
 @NgModule({
   declarations: [
@@ -36,33 +38,37 @@ import { provideAnalytics, getAnalytics } from '@angular/fire/analytics';
     HeaderComponent,
     SidebarComponent,
     HomeComponent,
-    EserciziComponent,
-    DettaglioEserciziComponent,
     AnagraficaComponent,
     AnagraficaListComponent,
     AnagraficaDetailComponent,
     GestioneSchedeComponent
+    // Non dichiarare componenti standalone qui
   ],
   imports: [
     BrowserModule,
     CommonModule,
-    AppRoutingModule,
-    RouterModule,
     FormsModule,
-    // compat modules (used by legacy FirebaseService)
+    AppRoutingModule,
+    // Importa componenti standalone
+    EserciziComponent,
+    DettaglioEserciziComponent,
+    // AngularFire compat modules
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireAuthModule,
     AngularFirestoreModule,
     AngularFireStorageModule,
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
   providers: [
     FirebaseService,
-    // register modular Firebase providers here for NgModule-based apps
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage())
-    ,provideAnalytics(() => getAnalytics())
+    provideStorage(() => getStorage()),
+    provideAnalytics(() => getAnalytics())
   ],
   bootstrap: [AppComponent]
 })

@@ -2,18 +2,7 @@
   <div class="logo">Prof Ghizz</div>
 
   <nav class="header-actions">
-    <span class="app-state" *ngIf="isStandalone">Installata</span>
-
-    <a class="open-browser" href="https://lucasviluppo21-design.github.io/sviluppo/" target="_self" rel="noopener">
-      Apri nel browser
-    </a>
-
-    <button
-      *ngIf="canInstall"
-      class="install-btn"
-      (click)="installApp()"
-      type="button">
-      Installa app
-    </button>
+    <!-- Solo la versione visibile -->
+    <span class="version-badge">v{{ appVersion }}</span>
   </nav>
 </header>

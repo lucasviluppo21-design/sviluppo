@@ -32,8 +32,24 @@
     </div>
 
     <div class="form-row">
-      <label>Descrizione Tecnica</label>
-      <textarea rows="5" [(ngModel)]="editForm.description" [readonly]="!editMode"></textarea>
+      <label>Posizionamento</label>
+      <textarea rows="2" [(ngModel)]="editForm.posizionamento" [readonly]="!editMode" placeholder="Come posizionarsi per l'esercizio"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Esecuzione</label>
+      <textarea rows="2" [(ngModel)]="editForm.esecuzione" [readonly]="!editMode" placeholder="Come eseguire correttamente l'esercizio"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Ritorno</label>
+      <textarea rows="2" [(ngModel)]="editForm.ritorno" [readonly]="!editMode" placeholder="Come tornare alla posizione iniziale"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Accorgimenti tecnici</label>
+      <textarea rows="2" [(ngModel)]="editForm.accorgimenti" [readonly]="!editMode" placeholder="Consigli tecnici e correzioni"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Obiettivo</label>
+      <textarea rows="2" [(ngModel)]="editForm.obiettivo" [readonly]="!editMode" placeholder="Scopo o obiettivo dell'esercizio"></textarea>
     </div>
 
     <div class="form-row small-tags">
@@ -60,12 +76,12 @@
     </div>
   </div>
 
-  <!-- Solo Note Personali a destra -->
+  <!-- Note Personali a destra -->
   <aside class="right-side">
     <div class="notes">
       <h4>Note Personali</h4>
-      <div class="note-card" *ngIf="!editMode">{{ notes || 'Nessuna nota' }}</div>
-      <textarea class="note-textarea" rows="6" [(ngModel)]="notes" *ngIf="editMode" placeholder="Scrivi le tue note..."></textarea>
+      <div class="note-card" *ngIf="!editMode">{{ editForm.notes || 'Nessuna nota' }}</div>
+      <textarea class="note-textarea" rows="6" [(ngModel)]="editForm.notes" *ngIf="editMode" placeholder="Scrivi le tue note..."></textarea>
     </div>
   </aside>
 </div>
