@@ -28,11 +28,16 @@ interface ScheduleExercise {
   secondi: number;
   caricoKg: number;
   note: string;
+  profGhizzField1?: string;
+  profGhizzField2?: string;
 }
 interface Giorno {
   nome: string;
   esercizi: ScheduleExercise[];
   editing?: boolean;
+}
+interface Settimana {
+  nome: string;
 }
 interface Scheda {
   id?: string;
@@ -44,6 +49,8 @@ interface Scheda {
   orario?: string;
   giorni: Giorno[];
   createdAt?: number;
+  templateType?: string;
+  settimane?: Settimana[];
 }
 
 @Component({
@@ -68,14 +75,16 @@ export class GestioneSchedeComponent implements OnInit {
     durata: '4 Settimane',
     dataInizio: '',
     orario: '',
-    giorni: [{ nome: 'Giorno 1', esercizi: [] }]
+    giorni: [{ nome: 'Giorno 1', esercizi: [] }],
+    templateType: 'fitnessanddance',
+    settimane: [{ nome: 'Settimana 1' }]
   };
 
-  // Logo locale, NON salvato nel DB/Storage
   logoPreviewUrl: string | null = null;
   tempLogoFile: File | null = null;
 
   giornoAttivoIndex = 0;
+  settimanaAttivaIndex = 0;
   esercizi: Array<{ id: string; name: string; category: string; image?: string }> = [];
   categorie: Array<{ id: string; name: string; image?: string; selected?: boolean }> = [];
   eserciziFiltrati: Array<{ id: string; name: string; category: string; image?: string }> = [];
@@ -96,6 +105,10 @@ export class GestioneSchedeComponent implements OnInit {
   showSavedMsg = false;
   savedMsgText = 'Scheda salvata';
 
+  templateType = 'fitnessanddance';
+
+  settimane: Settimana[] = [{ nome: 'Settimana 1' }];
+
   get pagedExercises() {
     const esercizi = this.scheda.giorni[this.giornoAttivoIndex].esercizi;
     const start = this.currentExercisePage * this.pageSize;
@@ -108,7 +121,10 @@ export class GestioneSchedeComponent implements OnInit {
   goToPrevExercisePage() { if (this.currentExercisePage > 0) this.currentExercisePage--; }
   goToNextExercisePage() { if (this.currentExercisePage < this.totalExercisePages - 1) this.currentExercisePage++; }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
+    this.initStandard();
+  }
+  async initStandard() {
     await this.loadUsers();
     await this.loadSelectedUser();
     await this.loadExercises();
@@ -119,31 +135,67 @@ export class GestioneSchedeComponent implements OnInit {
     if (!this.scheda.dataInizio) this.scheda.dataInizio = this.oggi;
     if (!this.scheda.orario) this.scheda.orario = this.normalizeTimeToHMS(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     this.generateLink();
-  }
+    this.scheda.templateType = this.templateType;
 
+    if (!this.scheda.settimane || this.scheda.settimane.length === 0) {
+      this.scheda.settimane = [{ nome: 'Settimana 1' }];
+    }
+    this.settimane = this.scheda.settimane;
+
+    if (this.templateType === 'profghizztemplate') {
+      this.giornoAttivoIndex = 0;
+      this.settimanaAttivaIndex = 0;
+    }
+  }
+  onTemplateTypeChange(type: string) {
+    this.templateType = type;
+    this.scheda.templateType = type;
+    if (type === 'profghizztemplate') {
+      if ((!this.scheda.settimane || this.scheda.settimane.length === 0)) {
+        this.scheda.settimane = [{ nome: 'Settimana 1' }];
+        this.settimane = this.scheda.settimane;
+        this.settimanaAttivaIndex = 0;
+      }
+    }
+  }
+  setSettimana(i: number) {
+    this.settimanaAttivaIndex = i;
+  }
+  aggiungiSettimana() {
+    const n = this.settimane.length + 1;
+    this.settimane.push({ nome: 'Settimana ' + n });
+    this.scheda.settimane = this.settimane;
+    this.settimanaAttivaIndex = this.settimane.length - 1;
+    this.persistSchedule();
+  }
+  rimuoviSettimana() {
+    if (this.settimane.length === 1) return;
+    this.settimane.splice(this.settimanaAttivaIndex, 1);
+    if (this.settimanaAttivaIndex >= this.settimane.length) {
+      this.settimanaAttivaIndex = this.settimane.length - 1;
+    }
+    this.scheda.settimane = this.settimane;
+    this.persistSchedule();
+  }
   async loadUsers() {
     const usersCol = collection(this.firestore, 'users');
     const snap = await getDocs(usersCol);
     this.allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() } as User));
   }
-
   async loadSelectedUser() {
     this.cliente = this.allUsers[0] || null;
     if (this.cliente) this.scheda.userId = this.cliente.id;
   }
-
   async loadExercises() {
     const exCol = collection(this.firestore, 'exercises');
     const snap = await getDocs(exCol);
     this.esercizi = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
   }
-
   async loadCategories() {
     const catCol = collection(this.firestore, 'categories');
     const snap = await getDocs(catCol);
     this.categorie = snap.docs.map(d => ({ id: d.id, selected: false, ...d.data() } as any));
   }
-
   async loadExistingSchedule() {
     if (!this.cliente) return;
     const schedeCol = collection(this.firestore, 'schede');
@@ -159,9 +211,14 @@ export class GestioneSchedeComponent implements OnInit {
       if (!this.scheda.giorni || this.scheda.giorni.length === 0) {
         this.scheda.giorni = [{ nome: 'Giorno 1', esercizi: [] }];
       }
+      this.scheda.templateType = this.scheda.templateType || 'fitnessanddance';
+      this.templateType = this.scheda.templateType;
+      if (!this.scheda.settimane || this.scheda.settimane.length === 0) {
+        this.scheda.settimane = [{ nome: 'Settimana 1' }];
+      }
+      this.settimane = this.scheda.settimane;
     }
   }
-
   filterUsers() {
     const term = this.userSearch.toLowerCase().trim();
     this.filteredUserList = this.allUsers.filter(u =>
@@ -178,7 +235,6 @@ export class GestioneSchedeComponent implements OnInit {
     this.generateLink();
     this.currentExercisePage = 0;
   }
-
   enableTabEdit(g: Giorno) { g.editing = true; setTimeout(() => {
     const inputs = document.querySelectorAll('.tab-edit');
     const last = inputs[inputs.length - 1] as HTMLInputElement;
@@ -202,13 +258,29 @@ export class GestioneSchedeComponent implements OnInit {
     this.currentExercisePage = 0;
     this.persistSchedule();
   }
-
-  createScheduleExercise(e: { id: string; name: string; category: string; image?: string }): ScheduleExercise {
-    return { id: e.id, nome: e.name, image: e.image, categoria: e.category, serie: 3, ripetizioni: 10, minuti: 0, secondi: 0, caricoKg: 0, note: '' };
-  }
   aggiungiEsercizioAlGiorno(e: { id: string; name: string; category: string; image?: string }) {
     const g = this.scheda.giorni[this.giornoAttivoIndex];
-    g.esercizi.push(this.createScheduleExercise(e));
+    if (this.templateType === 'profghizztemplate') {
+      g.esercizi.push({
+        id: e.id,
+        nome: e.name,
+        image: e.image,
+        categoria: e.category,
+        serie: 3, ripetizioni: 10, minuti: 0, secondi: 0,
+        caricoKg: 0, note: '',
+        profGhizzField1: '',
+        profGhizzField2: ''
+      });
+    } else {
+      g.esercizi.push({
+        id: e.id,
+        nome: e.name,
+        image: e.image,
+        categoria: e.category,
+        serie: 3, ripetizioni: 10, minuti: 0, secondi: 0,
+        caricoKg: 0, note: ''
+      });
+    }
     this.persistSchedule();
   }
   rimuoviEsercizio(index: number) {
@@ -225,12 +297,13 @@ export class GestioneSchedeComponent implements OnInit {
       return nameMatch && catMatch;
     });
   }
-
   async salvaScheda() {
     await this.authService.ensureSignedIn();
     const now = new Date();
     this.scheda.orario = this.normalizeTimeToHMS(now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     this.scheda.dataInizio = now.toISOString().split('T')[0];
+    this.scheda.templateType = this.templateType;
+    this.scheda.settimane = this.settimane;
 
     await this.persistSchedule();
 
@@ -242,7 +315,6 @@ export class GestioneSchedeComponent implements OnInit {
     this.savedMsgText = 'Scheda salvata';
     setTimeout(() => { this.showSavedMsg = false; }, 2500);
   }
-
   private normalizeTimeToHMS(time?: string): string {
     if (!time) return '';
     const m = time.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
@@ -250,18 +322,23 @@ export class GestioneSchedeComponent implements OnInit {
     const ss = m[3] ?? '00';
     return `${m[1]}:${m[2]}:${ss}`;
   }
-
   private async buildPdfBase64(): Promise<string> {
     try {
-      const docPdf: any = await this.pdfSchedaService.buildDoc(this.scheda, this.cliente, this.logoPreviewUrl);
-      const dataUri: string = docPdf.output('datauristring');
-      const base64 = dataUri.split(',')[1] || '';
-      return base64;
+      if (this.scheda.templateType === 'profghizztemplate') {
+        const docPdf: any = await this.pdfSchedaService.buildProfGhizzDoc(this.scheda, this.cliente, this.logoPreviewUrl);
+        const dataUri: string = docPdf.output('datauristring');
+        const base64 = dataUri.split(',')[1] || '';
+        return base64;
+      } else {
+        const docPdf: any = await this.pdfSchedaService.buildDoc(this.scheda, this.cliente, this.logoPreviewUrl);
+        const dataUri: string = docPdf.output('datauristring');
+        const base64 = dataUri.split(',')[1] || '';
+        return base64;
+      }
     } catch {
       return '';
     }
   }
-
   private async appendCardToUser(dataInizio: string, orario: string, pdfBase64: string) {
     if (!this.cliente || !this.scheda) return;
     await this.authService.ensureSignedIn();
@@ -269,7 +346,7 @@ export class GestioneSchedeComponent implements OnInit {
     const data = this.formatDateIT(dataInizio);
     const time = this.normalizeTimeToHMS(orario);
 
-    const MAX_BASE64 = 850_000; // ~0.85MB per restare sotto 1MB limite Firestore doc
+    const MAX_BASE64 = 850_000;
     const nuovaCard: WorkoutCard & { pdfBase64?: string } = {
       title: titolo,
       date: data || '',
@@ -285,7 +362,6 @@ export class GestioneSchedeComponent implements OnInit {
       const existing = (snap.exists() && Array.isArray((snap.data() as any).cards))
         ? (snap.data() as any).cards as WorkoutCard[]
         : [];
-      // aggiunge in fondo alla lista senza sovrascrivere quelle esistenti
       const updated = [...existing, nuovaCard];
       await updateDoc(userRef, { cards: updated });
       if (this.cliente) this.cliente.cards = updated;
@@ -293,7 +369,6 @@ export class GestioneSchedeComponent implements OnInit {
       console.error('Error appending card to user', err);
     }
   }
-
   private computeScheduleTitle(): string {
     const giorno = this.scheda.giorni?.[this.giornoAttivoIndex]?.nome || 'Scheda allenamento';
     const livello = this.scheda.livello || '';
@@ -307,14 +382,15 @@ export class GestioneSchedeComponent implements OnInit {
     if (!m) return null;
     return `${m[3]}/${m[2]}/${m[1]}`;
   }
-
   async persistSchedule() {
     if (!this.cliente) return;
     await this.authService.ensureSignedIn();
     const data: Scheda = {
       ...this.scheda,
       userId: this.cliente.id,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      templateType: this.templateType,
+      settimane: this.settimane
     };
     if (this.scheda.id) {
       const schedaDoc = doc(this.firestore, `schede/${this.scheda.id}`);
@@ -333,19 +409,21 @@ export class GestioneSchedeComponent implements OnInit {
       }
     }
   }
-
   apriSchedaPerUser(userId: string) {
     this.router.navigate(['/gestione-schede'], { state: { selectedUserId: userId } });
   }
-
   async anteprimaPdf() {
-    const docPdf: any = await this.pdfSchedaService.buildDoc(this.scheda, this.cliente, this.logoPreviewUrl);
+    let docPdf: any;
+    if (this.scheda.templateType === 'profghizztemplate') {
+      docPdf = await this.pdfSchedaService.buildProfGhizzDoc(this.scheda, this.cliente, this.logoPreviewUrl);
+    } else {
+      docPdf = await this.pdfSchedaService.buildDoc(this.scheda, this.cliente, this.logoPreviewUrl);
+    }
     const blob = docPdf.output('blob');
     if (this.pdfBlobUrl) try { URL.revokeObjectURL(this.pdfBlobUrl); } catch {}
     this.pdfBlobUrl = URL.createObjectURL(blob);
     window.open(this.pdfBlobUrl, '_blank');
   }
-
   openShareModal() { this.generateLink(); this.shareModalOpen = true; }
   closeShareModal() { this.shareModalOpen = false; }
   generateLink() {
@@ -371,12 +449,10 @@ export class GestioneSchedeComponent implements OnInit {
     }));
     this.generatedLink = `${base}/scheda-share?data=${summary}`;
   }
-
   copyShareLink() {
     if (!this.generatedLink) return;
     navigator.clipboard.writeText(this.generatedLink).catch(() => {});
   }
-
   moveExerciseUp(index: number) {
     const elenco = this.scheda.giorni[this.giornoAttivoIndex].esercizi;
     const realIdx = index + this.currentExercisePage * this.pageSize;
@@ -384,7 +460,6 @@ export class GestioneSchedeComponent implements OnInit {
     [elenco[realIdx - 1], elenco[realIdx]] = [elenco[realIdx], elenco[realIdx - 1]];
     this.persistSchedule();
   }
-
   moveExerciseDown(index: number) {
     const elenco = this.scheda.giorni[this.giornoAttivoIndex].esercizi;
     const realIdx = index + this.currentExercisePage * this.pageSize;
@@ -392,7 +467,6 @@ export class GestioneSchedeComponent implements OnInit {
     [elenco[realIdx + 1], elenco[realIdx]] = [elenco[realIdx], elenco[realIdx + 1]];
     this.persistSchedule();
   }
-
   resetExercise(index: number) {
     const elenco = this.scheda.giorni[this.giornoAttivoIndex].esercizi;
     const realIdx = index + this.currentExercisePage * this.pageSize;
@@ -400,10 +474,12 @@ export class GestioneSchedeComponent implements OnInit {
     elenco[realIdx].ripetizioni = 10;
     elenco[realIdx].minuti = 0;
     elenco[realIdx].secondi = 0;
+    elenco[realIdx].caricoKg = 0;
     elenco[realIdx].note = '';
+    elenco[realIdx].profGhizzField1 = '';
+    elenco[realIdx].profGhizzField2 = '';
     this.persistSchedule();
   }
-
   onLogoSelect(event: any): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || !input.files[0]) return;

@@ -203,7 +203,6 @@ export class PdfSchedaService {
       y = yGrid + 6;
     }
 
-    // NOTE FINALI COME TABELLA RIGHE (no griglia)
     if (y + barraH + 18 * 7 > pageH - safetyBottom) {
       doc.addPage();
       y = 18;
@@ -217,7 +216,6 @@ export class PdfSchedaService {
     doc.setTextColor('#000000');
     y += barraH + 2;
 
-    // Tabella: solo righe, niente colonne o quadrati
     const note = cliente?.personalNotes ?? scheda?.personalNotes ?? "";
     const splitted = typeof note === "string" && note.trim() ? note.split('\n') : [];
     const maxFinaleRows = 18;
@@ -229,13 +227,64 @@ export class PdfSchedaService {
         doc.addPage();
         y = 18;
       }
-      doc.line(marginX, y, marginX + contentW, y); // solo riga orizzontale
+      doc.line(marginX, y, marginX + contentW, y);
       if (splitted[r]) {
         doc.text(splitted[r], marginX + 2.5, y + lineHeight * 0.68, { align: 'left' });
       }
       y += lineHeight;
     }
-    doc.line(marginX, y, marginX + contentW, y); // ultima riga chiusura
+    doc.line(marginX, y, marginX + contentW, y);
+
+    return doc;
+  }
+
+  async buildProfGhizzDoc(scheda: any, cliente: any, logoPreviewUrl: string | null = null): Promise<any> {
+    const doc: any = new jsPDF({ unit: 'mm', format: 'a4', hotfixes: ['px_scaling'] });
+    const pageW = doc.internal.pageSize.getWidth();
+    const marginX = 16;
+    let y = 18;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('Prof Ghizz Personal Template', pageW / 2, y, { align: 'center' });
+    y += 12;
+
+    doc.setFontSize(13.2);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(`Cliente: ${cliente?.name || ''}`, marginX, y);
+    y += 8;
+    doc.text(`Inizio: ${scheda?.dataInizio || ''}`, marginX, y);
+
+    y += 12;
+    doc.setFontSize(12);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('Esercizi Profilati', marginX, y);
+    y += 10;
+
+    for (const giorno of scheda.giorni) {
+      if (y > 265) { doc.addPage(); y = 18; }
+      doc.setFont('Helvetica', 'bold');
+      doc.text(giorno.nome, marginX, y);
+      y += 7;
+      for (const ex of giorno.esercizi) {
+        if (y > 275) { doc.addPage(); y = 18; }
+        doc.setFont('Helvetica', 'normal');
+        doc.text(`- ${ex.nome}`, marginX + 4, y);
+        y += 6;
+        doc.setFont('Helvetica', 'italic');
+        doc.text('ProfGhizz Campo 1: _______________________________', marginX + 12, y);
+        y += 6;
+        doc.text('ProfGhizz Campo 2: _______________________________', marginX + 12, y);
+        y += 8;
+      }
+      y += 5;
+    }
+    y += 4;
+    doc.setFontSize(12);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('Note:', marginX, y);
+    y += 7;
+    doc.setFont('Helvetica', 'normal');
+    doc.text((cliente?.personalNotes || scheda?.personalNotes || ''), marginX + 2, y, { maxWidth: pageW - 2 * marginX });
 
     return doc;
   }

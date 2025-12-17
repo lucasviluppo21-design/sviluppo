@@ -2,12 +2,13 @@ export const environment = {
   production: true,
   version: '1.1', // aggiorna qui quando fai il deploy di produzione
   firebase: {
-    apiKey: "AIzaSyCQgTWYANjjhTl5n3se4MLhYAkGX_um2ag",
-    authDomain: "gymcardsapp.firebaseapp.com",
-    projectId: "gymcardsapp",
-    storageBucket: "gymcardsapp.appspot.com",
-    messagingSenderId: "30373311778",
-    appId: "1:30373311778:web:d599488bdb7feda34f617b",
-    measurementId: "G-3CM91FP0WL"
+   apiKey: "AIzaSyCcUiX0VhFp0onLlKVknBHmUfMLAUEmFb8",
+    authDomain: "profghizzapp-7cd59.firebaseapp.com",
+    projectId: "profghizzapp-7cd59",
+    storageBucket: "profghizzapp-7cd59.firebasestorage.app",
+    messagingSenderId: "142548255598",
+    appId: "1:142548255598:web:963e0aecd134f7d7afb77f",
+    measurementId: "G-B77VGH8SVQ"
   }
 };
+

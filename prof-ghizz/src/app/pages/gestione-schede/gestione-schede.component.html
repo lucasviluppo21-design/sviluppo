@@ -3,10 +3,10 @@
 </div>
 <div class="schede-page">
   <aside class="col-left section-box">
-   <div class="avatar-block" (click)="openUserPicker()">
-  <img *ngIf="cliente?.avatarUrl" [src]="cliente?.avatarUrl" alt="Cliente">
-  <div *ngIf="!cliente?.avatarUrl" class="avatar-placeholder">👤</div>
-  </div>
+    <div class="avatar-block" (click)="openUserPicker()">
+      <img *ngIf="cliente?.avatarUrl" [src]="cliente?.avatarUrl" alt="Cliente">
+      <div *ngIf="!cliente?.avatarUrl" class="avatar-placeholder">👤</div>
+    </div>
     <div class="cliente-name">{{ cliente?.name || 'Seleziona cliente' }}</div>
     <div class="cliente-info">
       <div class="info-row">
@@ -59,6 +59,13 @@
     </div>
   </aside>
   <section class="col-center section-box">
+    <div class="row-template-select-compact small">
+      <label for="templateTypeSel" class="label-template-type-compact">Template</label>
+      <select id="templateTypeSel" class="select-template-type-compact" [(ngModel)]="templateType" (change)="onTemplateTypeChange(templateType)">
+        <option value="fitnessanddance">Palestra</option>
+        <option value="profghizztemplate">Atleta</option>
+      </select>
+    </div>
     <div class="giorni-tabs">
       <div class="tab-item"
            *ngFor="let g of scheda.giorni; let i = index"
@@ -81,6 +88,21 @@
               [disabled]="scheda.giorni.length === 1"
               title="Rimuovi giorno">
         – Giorno
+      </button>
+    </div>
+    <div *ngIf="templateType==='profghizztemplate'" class="settimane-tabs">
+      <div class="tab-item"
+           *ngFor="let s of settimane; let si = index"
+           [class.active]="si===settimanaAttivaIndex"
+           (click)="setSettimana(si)">
+        {{ s.nome }}
+      </div>
+      <button class="tab-add" (click)="aggiungiSettimana()">+ Settimana</button>
+      <button class="tab-remove"
+              (click)="rimuoviSettimana()"
+              [disabled]="settimane.length === 1"
+              title="Rimuovi settimana">
+        – Settimana
       </button>
     </div>
     <div class="giorno-contenuto">
@@ -108,6 +130,7 @@
             <label>Ripetizioni <input type="number" min="1" [(ngModel)]="ex.ripetizioni"></label>
             <label>Min <input type="number" min="0" [(ngModel)]="ex.minuti"></label>
             <label>Sec <input type="number" min="0" [(ngModel)]="ex.secondi"></label>
+            <label *ngIf="templateType==='profghizztemplate'">Kg <input type="number" min="0" step="0.1" [(ngModel)]="ex.caricoKg"></label>
           </div>
           <textarea class="ex-note" rows="2"
               [(ngModel)]="ex.note"
@@ -154,6 +177,7 @@
   </aside>
 </div>
 
+<!-- MODAL: User Picker -->
 <div class="user-picker-backdrop" *ngIf="showUserPicker">
   <div class="user-picker-modal">
     <div class="picker-header">
@@ -177,6 +201,8 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: Share -->
 <div class="share-backdrop" *ngIf="shareModalOpen">
   <div class="share-modal">
     <div class="share-header">
