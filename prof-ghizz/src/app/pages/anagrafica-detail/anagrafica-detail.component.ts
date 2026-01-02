@@ -6,6 +6,7 @@ import { Firestore, doc, docData, updateDoc, deleteDoc } from '@angular/fire/fir
 import { AuthService } from '../../services/auth.service';
 import { User, WorkoutCard } from '../../models/user.model';
 import { ImageService } from '../../services/image.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-anagrafica-detail',
@@ -29,6 +30,9 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
 
   filterExpiredOnly: boolean = false;
   today: string = new Date().toISOString().substring(0, 10);
+
+  // Condivisione inline per singola scheda
+  shareOpenIndex: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -65,7 +69,7 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
       if (!u) return;
       const asUser = { ...u, id: this.userId } as User;
       if (Array.isArray(asUser.cards)) {
-        asUser.cards = asUser.cards.sort((a, b) => {
+        asUser.cards = (asUser.cards as WorkoutCard[]).sort((a: WorkoutCard, b: WorkoutCard) => {
           const aDate = this.parseItDateTime(a.date, a.time);
           const bDate = this.parseItDateTime(b.date, b.time);
           return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
@@ -97,6 +101,19 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
   isExpired(subscriptionEnd?: string): boolean {
     if (!subscriptionEnd) return false;
     return subscriptionEnd <= this.today;
+  }
+
+  async updateSubscriptionEnd(newDate: string): Promise<void> {
+    if (!this.user?.id) return;
+    try {
+      await this.authService.ensureSignedIn();
+      const userDocRef = doc(this.firestore, `users/${this.user.id}`);
+      await updateDoc(userDocRef, { subscriptionEnd: newDate || '' });
+      this.user = { ...this.user, subscriptionEnd: newDate || '' };
+    } catch (err) {
+      console.error('Errore aggiornamento scadenza', err);
+      alert('Errore durante l’aggiornamento della scadenza.');
+    }
   }
 
   async deleteCard(cardIndex: number) {
@@ -141,7 +158,8 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
     const file = input.files[0];
     this.avatarLoading = true;
     this.editForm.avatarFile = file;
-    this.editForm.avatarUrl = await this.imageService.compressAndConvertToBase64(file, 1000, 256);
+    const base64 = await this.imageService.compressAndConvertToBase64(file, 1000, 256) as unknown as string;
+    this.editForm.avatarUrl = base64;
     this.avatarLoading = false;
   }
 
@@ -218,63 +236,94 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  async updateCardAbbonamentoEndDate(index: number, value: string): Promise<void> {
-    if (!this.user || !this.user.cards || !this.user.cards[index] || !this.user.id) return;
-    this.user.cards[index].abbonamentoEndDate = value;
-    const userDoc = doc(this.firestore, `users/${this.user.id}`);
-    try {
-      await this.authService.ensureSignedIn();
-      await updateDoc(userDoc, { cards: this.user.cards });
-    } catch (err) {
-      console.error('Errore aggiornamento scadenza tessera scheda', err);
-      alert('Impossibile salvare la nuova scadenza della tessera!');
+  getShareUrl(index: number): string {
+    const path = `/public-pdf/${this.user?.id ?? ''}/${index}`;
+
+    // If a public base URL is configured in environment, use it (recommended for deployments)
+    if (environment.publicBaseUrl && environment.publicBaseUrl.trim()) {
+      return `${environment.publicBaseUrl.replace(/\/$/, '')}${path}`;
     }
+
+    // Fallback: avoid returning GitHub repo UI URLs when the app is viewed from GitHub
+    const hostname = location.hostname || '';
+    const basePath = location.pathname.replace(/\/$/, '');
+    if (hostname.includes('github.com') || hostname.includes('raw.githubusercontent.com')) {
+      // Return a path without the GitHub origin to avoid sharing links that require GitHub auth
+      return `${basePath}#${path}`; // e.g. /sviluppo#/public-pdf/..../..
+    }
+
+    // Default behaviour: use current origin+path (works when app is hosted under a proper domain)
+    return `${location.origin}${basePath}#${path}`;
   }
 
-  async updateSubscriptionEnd(value: string): Promise<void> {
-    if (!this.user?.id) return;
-    const userDoc = doc(this.firestore, `users/${this.user.id}`);
-    try {
-      await this.authService.ensureSignedIn();
-      await updateDoc(userDoc, { subscriptionEnd: value });
-      this.user.subscriptionEnd = value;
-    } catch (err) {
-      console.error('Errore aggiornamento scadenza tessera', err);
-      alert('Impossibile salvare la nuova scadenza!');
+  copyShareUrl(index: number): void {
+    navigator.clipboard.writeText(this.getShareUrl(index)).catch(() => {});
+  }
+
+  shareByEmail(index: number): void {
+    const subject = encodeURIComponent('La tua scheda di allenamento');
+    const body = encodeURIComponent(`Ecco la tua scheda:\n${this.getShareUrl(index)}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  }
+
+  shareOnWhatsApp(index: number): void {
+    const message = encodeURIComponent(`La tua scheda di allenamento:\n${this.getShareUrl(index)}`);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  }
+
+  shareOnTelegram(index: number): void {
+    const url = encodeURIComponent(this.getShareUrl(index));
+    const text = encodeURIComponent('La tua scheda di allenamento');
+    window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+  }
+
+  async shareNative(index: number): Promise<void> {
+    const url = this.getShareUrl(index);
+    const title = 'Scheda di allenamento';
+    const text = `Ciao! Ecco la tua scheda di allenamento.\n${url}`;
+    if ((navigator as any).share) {
+      try {
+        await (navigator as any).share({ title, text, url });
+      } catch {}
+    } else {
+      this.toggleShare(index);
     }
   }
 
   openWhatsAppWithMessage(): void {
-    if (!this.user?.phone || !this.user?.subscriptionEnd) return;
-    const msg = `Ciao ${this.user.name}, la tua tessera scade il giorno ${this.user.subscriptionEnd}. Provvedi al rinnovo.`;
-    const whatsappURL = `https://wa.me/${this.user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
-    window.open(whatsappURL, '_blank');
+    if (!this.user?.phone) return;
+    const phone = this.user.phone.replace(/\D/g, '');
+    const text = encodeURIComponent('Ciao! Ti invio i riferimenti della tua scheda di allenamento.');
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   }
 
-  openDeleteModal(): void {
-    this.showDeleteModal = true;
-  }
-
-  closeDeleteModal(): void {
-    this.showDeleteModal = false;
-  }
-
-  async deleteUserCustom(): Promise<void> {
-    if (!this.user || !this.user.id) return;
-    const userDoc = doc(this.firestore, `users/${this.user.id}`);
-    try {
-      await this.authService.ensureSignedIn();
-      await deleteDoc(userDoc);
-    } catch (err) {
-      console.error('Error deleting user', err);
-    }
-    this.closeDeleteModal();
-    this.router.navigate(['/anagrafica']);
+  toggleShare(index: number): void {
+    if (this.shareOpenIndex === index) this.shareOpenIndex = null;
+    else this.shareOpenIndex = index;
   }
 
   get filteredCards(): WorkoutCard[] {
     if (!this.user?.cards) return [];
     if (!this.filterExpiredOnly) return this.user.cards as WorkoutCard[];
     return (this.user.cards as WorkoutCard[]).filter(card => card.abbonamentoEndDate && card.abbonamentoEndDate <= this.today);
+  }
+
+  async deleteUserCustom(): Promise<void> {
+    if (!this.user?.id) return;
+    const userDoc = doc(this.firestore, `users/${this.user.id}`);
+    try {
+      await this.authService.ensureSignedIn();
+      await deleteDoc(userDoc);
+      this.router.navigate(['/anagrafica/list']);
+    } catch (err) {
+      console.error('Errore eliminazione utente', err);
+    }
+  }
+
+  openDeleteModal(): void {
+    this.showDeleteModal = true;
+  }
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
   }
 }

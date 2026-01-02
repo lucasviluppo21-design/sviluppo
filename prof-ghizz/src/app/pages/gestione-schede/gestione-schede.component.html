@@ -55,9 +55,9 @@
     <div class="left-actions">
       <button class="btn primary" (click)="salvaScheda()">Salva Scheda</button>
       <button class="btn outline" (click)="anteprimaPdf()">Stampa PDF</button>
-      <button class="btn share" (click)="openShareModal()" [disabled]="!cliente">Condividi Link</button>
     </div>
   </aside>
+
   <section class="col-center section-box">
     <div class="row-template-select-compact small">
       <label for="templateTypeSel" class="label-template-type-compact">Template</label>
@@ -66,52 +66,31 @@
         <option value="profghizztemplate">Atleta</option>
       </select>
     </div>
+
     <div class="giorni-tabs">
-      <div class="tab-item"
-           *ngFor="let g of scheda.giorni; let i = index"
-           [class.active]="i===giornoAttivoIndex">
-        <div *ngIf="!g.editing"
-             class="tab-label"
-             (click)="setGiorno(i)"
-             (dblclick)="enableTabEdit(g)">
-          {{ g.nome }}
-        </div>
-        <input *ngIf="g.editing"
-               class="tab-edit"
-               [(ngModel)]="g.nome"
-               (blur)="disableTabEdit(g)"
-               (keydown.enter)="disableTabEdit(g)">
+      <div class="tab-item" *ngFor="let g of scheda.giorni; let i = index" [class.active]="i===giornoAttivoIndex">
+        <div *ngIf="!g.editing" class="tab-label" (click)="setGiorno(i)" (dblclick)="enableTabEdit(g)">{{ g.nome }}</div>
+        <input *ngIf="g.editing" class="tab-edit" [(ngModel)]="g.nome" (blur)="disableTabEdit(g)" (keydown.enter)="disableTabEdit(g)">
       </div>
       <button class="tab-add" (click)="aggiungiGiorno()">+ Giorno</button>
-      <button class="tab-remove"
-              (click)="rimuoviGiorno()"
-              [disabled]="scheda.giorni.length === 1"
-              title="Rimuovi giorno">
-        – Giorno
-      </button>
+      <button class="tab-remove" (click)="rimuoviGiorno()" [disabled]="scheda.giorni.length === 1" title="Rimuovi giorno">– Giorno</button>
     </div>
-    <div *ngIf="templateType==='profghizztemplate'" class="settimane-tabs">
-      <div class="tab-item"
-           *ngFor="let s of settimane; let si = index"
-           [class.active]="si===settimanaAttivaIndex"
-           (click)="setSettimana(si)">
+
+    <div class="settimane-tabs" *ngIf="templateType==='profghizztemplate' && scheda.giorni[giornoAttivoIndex]?.settimane">
+      <div class="tab-item" *ngFor="let s of scheda.giorni[giornoAttivoIndex].settimane; let si = index" [class.active]="si===settimanaAttivaIndex" (click)="setSettimana(si)">
         {{ s.nome }}
       </div>
-      <button class="tab-add" (click)="aggiungiSettimana()">+ Settimana</button>
-      <button class="tab-remove"
-              (click)="rimuoviSettimana()"
-              [disabled]="settimane.length === 1"
-              title="Rimuovi settimana">
-        – Settimana
-      </button>
+      <button class="tab-add" (click)="aggiungiSettimanaGiorno()">+ Settimana</button>
+      <button class="tab-remove" (click)="rimuoviSettimanaGiorno()" [disabled]="scheda.giorni[giornoAttivoIndex].settimane?.length === 1" title="Rimuovi settimana">– Settimana</button>
     </div>
+
     <div class="giorno-contenuto">
       <div class="empty-drop" *ngIf="scheda.giorni[giornoAttivoIndex].esercizi.length===0">
         Aggiungi un esercizio dalla colonna destra
       </div>
+
       <div class="exercise-list" *ngIf="scheda.giorni[giornoAttivoIndex].esercizi.length > 0">
-        <div class="exercise-card"
-             *ngFor="let ex of pagedExercises; let k = index">
+        <div class="exercise-card" *ngFor="let ex of pagedExercises; let k = index">
           <div class="ex-top">
             <div class="ex-img">
               <img *ngIf="ex.image" [src]="ex.image" alt="{{ex.nome}}">
@@ -125,32 +104,43 @@
               <button class="btn-icon remove" (click)="rimuoviEsercizio(k)">×</button>
             </div>
           </div>
-          <div class="ex-fields">
-            <label>Serie <input type="number" min="1" [(ngModel)]="ex.serie"></label>
-            <label>Ripetizioni <input type="number" min="1" [(ngModel)]="ex.ripetizioni"></label>
-            <label>Min <input type="number" min="0" [(ngModel)]="ex.minuti"></label>
-            <label>Sec <input type="number" min="0" [(ngModel)]="ex.secondi"></label>
-            <label *ngIf="templateType==='profghizztemplate'">Kg <input type="number" min="0" step="0.1" [(ngModel)]="ex.caricoKg"></label>
+          <div *ngIf="templateType==='profghizztemplate'" class="ex-fields">
+            <label>Serie <input type="number" min="0" [(ngModel)]="ex.settimaneValori[settimanaAttivaIndex].serie"></label>
+            <label>Ripetizioni <input type="number" min="0" [(ngModel)]="ex.settimaneValori[settimanaAttivaIndex].ripetizioni"></label>
+            <label>Min <input type="number" min="0" [(ngModel)]="ex.settimaneValori[settimanaAttivaIndex].minuti"></label>
+            <label>Sec <input type="number" min="0" [(ngModel)]="ex.settimaneValori[settimanaAttivaIndex].secondi"></label>
+            <label>Kg <input type="number" min="0" step="0.1" [(ngModel)]="ex.settimaneValori[settimanaAttivaIndex].caricoKg"></label>
+          </div>
+          <div *ngIf="templateType!=='profghizztemplate'" class="ex-fields">
+            <label>Serie <input type="number" min="0" [(ngModel)]="ex.settimaneValori[0].serie"></label>
+            <label>Ripetizioni <input type="number" min="0" [(ngModel)]="ex.settimaneValori[0].ripetizioni"></label>
+            <label>Min <input type="number" min="0" [(ngModel)]="ex.settimaneValori[0].minuti"></label>
+            <label>Sec <input type="number" min="0" [(ngModel)]="ex.settimaneValori[0].secondi"></label>
           </div>
           <textarea class="ex-note" rows="2"
-              [(ngModel)]="ex.note"
-              placeholder="Note"
-              (blur)="persistSchedule()"></textarea>
+                    *ngIf="templateType==='profghizztemplate'"
+                    [(ngModel)]="ex.settimaneValori[settimanaAttivaIndex].note"
+                    placeholder="Note"
+                    (blur)="persistSchedule()"></textarea>
+          <textarea class="ex-note" rows="2"
+                    *ngIf="templateType!=='profghizztemplate'"
+                    [(ngModel)]="ex.settimaneValori[0].note"
+                    placeholder="Note"
+                    (blur)="persistSchedule()"></textarea>
         </div>
       </div>
       <div class="exercise-pagination-mini" *ngIf="scheda.giorni[giornoAttivoIndex].esercizi.length > 0">
         <button class="page-arrow-mini" (click)="goToPrevExercisePage()" [disabled]="currentExercisePage <= 0">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="transparent"/><path d="M15.5 19 9.5 12l6-7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <span class="page-indicator-mini">
-          {{ currentExercisePage + 1 }} / {{ totalExercisePages || 1 }}
-        </span>
+        <span class="page-indicator-mini">{{ currentExercisePage + 1 }} / {{ totalExercisePages || 1 }}</span>
         <button class="page-arrow-mini" (click)="goToNextExercisePage()" [disabled]="currentExercisePage >= totalExercisePages - 1">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="transparent"/><path d="M8.5 5 14.5 12l-6 7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
     </div>
   </section>
+
   <aside class="col-right section-box">
     <div class="search-box">
       <input type="text" [(ngModel)]="searchTerm" (input)="filtraEsercizi()" placeholder="Cerca esercizi...">
@@ -160,9 +150,7 @@
       </select>
     </div>
     <div class="esercizi-scroll">
-      <div class="big-ex-card"
-           *ngFor="let e of eserciziFiltrati | slice:0:3"
-           (click)="aggiungiEsercizioAlGiorno(e)">
+      <div class="big-ex-card" *ngFor="let e of eserciziFiltrati | slice:0:3" (click)="aggiungiEsercizioAlGiorno(e)">
         <div class="big-img">
           <img *ngIf="e.image" [src]="e.image" alt="{{ e.name }}">
           <div *ngIf="!e.image" class="big-placeholder">🏋️</div>
@@ -177,7 +165,6 @@
   </aside>
 </div>
 
-<!-- MODAL: User Picker -->
 <div class="user-picker-backdrop" *ngIf="showUserPicker">
   <div class="user-picker-modal">
     <div class="picker-header">
@@ -198,36 +185,6 @@
         </div>
       </div>
       <div class="picker-empty" *ngIf="filteredUserList.length===0">Nessun utente</div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: Share -->
-<div class="share-backdrop" *ngIf="shareModalOpen">
-  <div class="share-modal">
-    <div class="share-header">
-      <div class="share-title">Condividi Scheda</div>
-      <button class="share-close" (click)="closeShareModal()">×</button>
-    </div>
-    <div class="share-body">
-      <div class="share-options">
-        <button class="share-option" (click)="shareEmail('gmail')">
-          <span class="share-icon gmail">G</span>
-          <span class="share-label">Gmail</span>
-        </button>
-        <button class="share-option" (click)="shareEmail('outlook')">
-          <span class="share-icon outlook">O</span>
-          <span class="share-label">Outlook</span>
-        </button>
-        <button class="share-option" (click)="copyShareLink()">
-          <span class="share-icon link">🔗</span>
-          <span class="share-label">Copia Link</span>
-        </button>
-      </div>
-      <div class="share-link-box">
-        <input type="text" [value]="generatedLink" readonly>
-        <button class="btn mini" (click)="copyShareLink()">Copia</button>
-      </div>
     </div>
   </div>
 </div>

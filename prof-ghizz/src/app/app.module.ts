@@ -14,13 +14,14 @@ import { AnagraficaListComponent } from './pages/anagrafica-list/anagrafica-list
 import { AnagraficaDetailComponent } from './pages/anagrafica-detail/anagrafica-detail.component';
 import { GestioneSchedeComponent } from './pages/gestione-schede/gestione-schede.component';
 
-// Standalone components: si importano, NON si dichiarano
-import { EserciziComponent } from './pages/esercizi/esercizi.component';
-import { DettaglioEserciziComponent } from './pages/dettaglio-esercizi/dettaglio-esercizi.component';
+// Standalone components (li metti solo negli imports se sono standalone: true)
+ import { EserciziComponent } from './pages/esercizi/esercizi.component';
+ import { DettaglioEserciziComponent } from './pages/dettaglio-esercizi/dettaglio-esercizi.component';
 
 import { FirebaseService } from './services/firebase.service';
 import { environment } from '../environments/environment';
 
+// AngularFire/Service Worker
 import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
@@ -32,6 +33,9 @@ import { provideStorage, getStorage } from '@angular/fire/storage';
 import { provideAnalytics, getAnalytics } from '@angular/fire/analytics';
 import { ServiceWorkerModule } from '@angular/service-worker';
 
+// Modulo QR code (usare sempre il nome QRCodeModule)
+import { QRCodeComponent } from 'angularx-qrcode';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -41,22 +45,22 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     AnagraficaComponent,
     AnagraficaListComponent,
     AnagraficaDetailComponent,
-    GestioneSchedeComponent
-    // Non dichiarare componenti standalone qui
+    GestioneSchedeComponent,
+    // NON mettere componenti standalone qui
   ],
   imports: [
     BrowserModule,
     CommonModule,
     FormsModule,
     AppRoutingModule,
-    // Importa componenti standalone
-    EserciziComponent,
-    DettaglioEserciziComponent,
+    // QR code module
+    QRCodeComponent,
     // AngularFire compat modules
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireAuthModule,
     AngularFirestoreModule,
     AngularFireStorageModule,
+    // Service Worker
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'

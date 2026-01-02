@@ -15,17 +15,6 @@
             <div class="user-detail-email">{{ user.email }}</div>
             <div class="user-detail-phone">
               Tel: {{ user.phone || '-' }}
-              <button
-                *ngIf="user.phone && user.subscriptionEnd"
-                class="icon-btn wa-btn"
-                style="margin-left:12px; background:#fff; border:2px solid #25d366; border-radius:50%; padding:4px 7px; box-shadow:0 1px 4px rgba(0,0,0,0.07); width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;"
-                title="Messaggia su WhatsApp"
-                (click)="openWhatsAppWithMessage()">
-                <svg width="28" height="28" viewBox="0 0 32 32" style="vertical-align:middle;">
-                  <circle cx="16" cy="16" r="16" fill="#25d366"/>
-                  <path d="M22 20.7c-.4 0-.8.1-1.2.2-.7.2-1.3.3-2 .3l-.4-.2c-2.7-1.1-5.7-3.9-6.6-6.6l-.1-.4c0-.7.1-1.4.3-2l.2-1.2c.1-.4-.1-.8-.3-1.1-.3-.3-.7-.5-1.1-.5h-2c-.5 0-1 .2-1.3.5-.6.6-.9 1.5-.6 2.4C8.5 17 12.4 20.1 16.6 21.2c.9.3 1.8 0 2.4-.6.3-.3.5-.8.5-1.3v-2c0-.4-.2-.8-.5-.1-.3-.3-.8-.5-1.2-.3z" fill="#fff" />
-                </svg>
-              </button>
               <span *ngIf="isExpired(user.subscriptionEnd)"
                     class="badge badge-danger"
                     style="margin-left:8px; background:#ffdede; color:#d32f2f; border-radius:6px; padding:0 8px;">
@@ -87,8 +76,8 @@
           <div class="schede-header">
             <h3>Schede di Allenamento</h3>
             <div class="schede-count" *ngIf="filteredCards.length">Totale: {{ filteredCards.length }}</div>
-            <!-- Checkbox "Solo tessere SCADUTE" rimosso -->
           </div>
+
           <div class="scheda-box">
             <ng-container *ngIf="filteredCards.length > 0; else schedeVuote">
               <div class="scheda-row" *ngFor="let card of filteredCards; let i = index">
@@ -99,12 +88,48 @@
                   </span>
                 </div>
                 <div class="scheda-actions-inline">
+                  <button class="btn small share" (click)="shareNative(i)" title="Condividi">
+                    <span class="material-icons small-icon">share</span>
+                  </button>
                   <button class="btn small" (click)="printCard(i)" title="Stampa PDF">
                     <span class="material-icons small-icon">print</span>
                   </button>
                   <button class="btn small outline" (click)="deleteCard(i)" title="Elimina">
                     <span class="material-icons small-icon">delete</span>
                   </button>
+                </div>
+
+                <div class="share-inline" *ngIf="shareOpenIndex === i">
+                  <div class="share-inline-left">
+                    <div class="share-url-row">
+                      <input class="share-url-input" type="text" [value]="getShareUrl(i)" readonly>
+                      <button class="btn tiny" (click)="copyShareUrl(i)">Copia</button>
+                    </div>
+                    <div class="share-buttons-row">
+                      <button class="btn tiny" (click)="shareByEmail(i)" title="Email">
+                        <span class="material-icons">email</span> Email
+                      </button>
+                      <button class="btn tiny" (click)="shareOnWhatsApp(i)" title="WhatsApp">
+                        <span class="material-icons">whatsapp</span> WhatsApp
+                      </button>
+                      <button class="btn tiny" (click)="shareOnTelegram(i)" title="Telegram">
+                        <span class="material-icons">send</span> Telegram
+                      </button>
+                    </div>
+                    <div style="margin-top:8px;">
+                      <a [href]="getShareUrl(i)" target="_blank" rel="noopener">Apri PDF</a>
+                    </div>
+                  </div>
+                  <div class="share-inline-right">
+                    <qrcode
+                      [qrdata]="getShareUrl(i)"
+                      [width]="256"
+                      [errorCorrectionLevel]="'H'"
+                      [elementType]="'img'"
+                      [margin]="2">
+                    </qrcode>
+                    <div class="qr-caption">Scansiona con la fotocamera del telefono</div>
+                  </div>
                 </div>
               </div>
             </ng-container>
@@ -118,7 +143,6 @@
       </div>
     </div>
 
-    <!-- Modali -->
     <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()"></div>
     <div class="modal-confirm-delete" *ngIf="showDeleteModal">
       <div class="modal-confirm-content" (click)="$event.stopPropagation()">

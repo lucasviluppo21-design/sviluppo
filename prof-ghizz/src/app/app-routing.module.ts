@@ -7,7 +7,6 @@ import { AnagraficaListComponent } from './pages/anagrafica-list/anagrafica-list
 import { AnagraficaDetailComponent } from './pages/anagrafica-detail/anagrafica-detail.component';
 import { GestioneSchedeComponent } from './pages/gestione-schede/gestione-schede.component';
 import { DettaglioEserciziComponent } from './pages/dettaglio-esercizi/dettaglio-esercizi.component';
-
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'esercizi', component: EserciziComponent },
@@ -16,11 +15,13 @@ const routes: Routes = [
   { path: 'anagrafica/list', component: AnagraficaListComponent },
   { path: 'anagrafica/:id', component: AnagraficaDetailComponent },
   { path: 'gestione-schede', component: GestioneSchedeComponent },
+  // route pubblica: apre direttamente il PDF salvato nel DB
+  { path: 'public-pdf/:userId/:cardIndex', loadComponent: () => import('./public-pdf/public-pdf.component').then(m => m.PublicPdfComponent) },
   { path: '**', redirectTo: '' }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, { useHash: true })],
   exports: [RouterModule]
 })
 export class AppRoutingModule {}
