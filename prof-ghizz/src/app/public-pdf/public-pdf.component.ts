@@ -1,130 +1,140 @@
-import { Component, OnInit, NgZone } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Firestore, doc, getDoc, updateDoc } from '@angular/fire/firestore';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Firestore, doc, docData } from '@angular/fire/firestore';
 import { PdfSchedaService } from '../services/pdf-scheda-service';
-import { AuthService } from '../services/auth.service';
+import { take } from 'rxjs/operators';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-public-pdf',
   templateUrl: './public-pdf.component.html',
-  styleUrls: ['./public-pdf.component.css']
+  styleUrls: ['./public-pdf.component.css'],
+  standalone: true,
+  imports: [CommonModule]
 })
 export class PublicPdfComponent implements OnInit {
-  loading = true;
-  error: string | null = null;
+  message = 'Sto aprendo il PDF...';
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private firestore: Firestore,
-    private pdfSchedaService: PdfSchedaService,
-    private authService: AuthService,
-    private ngZone: NgZone
+    private pdfSchedaService: PdfSchedaService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    const userId = this.route.snapshot.paramMap.get('userId');
-    const cardIndexRaw = this.route.snapshot.paramMap.get('cardIndex');
-    const cardIndex = cardIndexRaw ? Number(cardIndexRaw) : NaN;
+  ngOnInit(): void {
+    const userId = this.route.snapshot.paramMap.get('userId') || '';
+    const cardIndexStr = this.route.snapshot.paramMap.get('cardIndex') || '0';
+    const cardIndex = parseInt(cardIndexStr, 10);
 
-    if (!userId || Number.isNaN(cardIndex)) {
-      this.setError('Link non valido: dati mancanti.');
+    if (!userId) {
+      this.message = 'ID utente mancante.';
       return;
     }
 
-    try {
-      const userDocRef = doc(this.firestore, `users/${userId}`);
-      const userSnap = await getDoc(userDocRef);
-      if (!userSnap.exists()) {
-        this.setError('Utente non trovato.');
-        return;
-      }
+    // First try a public copy under publicCards/{userId}_{cardIndex}
+    const pubId = `${userId}_${cardIndex}`;
+    const pubDoc = doc(this.firestore, `publicCards/${pubId}`);
 
-      const user = userSnap.data() as any;
-      const card = user.cards?.[cardIndex];
-      if (!card) {
-        this.setError('Scheda non trovata.');
-        return;
-      }
-
-      // If pdfBase64 is available, open it directly
-      if (card.pdfBase64 && card.pdfBase64.length > 0) {
+    docData(pubDoc).pipe(take(1)).subscribe((p: any) => {
+      if (p?.pdfBase64) {
         try {
-          const byteCharacters = atob(card.pdfBase64);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          // Open in same tab so scanner opens the PDF directly
-          window.location.href = url;
-          // revoke after some time
-          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+          const bc = atob(p.pdfBase64);
+          const bn = new Array(bc.length);
+          for (let i = 0; i < bc.length; i++) bn[i] = bc.charCodeAt(i);
+          const ba = new Uint8Array(bn);
+          const b = new Blob([ba], { type: 'application/pdf' });
+          const uurl = URL.createObjectURL(b);
+          // Navigate to the blob URL in the current tab so the PDF opens directly
+          window.location.assign(uurl);
+          // Note: revocation after navigation may not run; it's acceptable here
+          this.message = 'Aperto il PDF.';
           return;
         } catch (err) {
-          console.error('Errore apertura PDF da base64', err);
-          // continue to attempt building the PDF
+          console.error('Errore apertura PDF da base64 (pubblicato)', err);
         }
       }
 
-      // If PDF isn't stored, build it, open it and try to save base64 to DB
-      const docPdf: any = await this.pdfSchedaService.buildDoc(card, user);
+      // If no public copy found, fallback to user's private doc
+      const userDoc = doc(this.firestore, `users/${userId}`);
 
-      // Try to get blob from jsPDF
-      let blob: Blob;
-      try {
-        // some jsPDF versions support output('blob')
-        blob = docPdf.output && typeof docPdf.output === 'function' ? docPdf.output('blob') : undefined;
-      } catch (e) {
-        blob = undefined as any;
-      }
-      if (!blob) {
-        // fallback to arraybuffer
-        const arr = docPdf.output('arraybuffer');
-        blob = new Blob([arr], { type: 'application/pdf' });
-      }
-
-      // Open PDF immediately
-      const pdfUrl = URL.createObjectURL(blob);
-      window.location.href = pdfUrl;
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
-
-      // Convert blob to base64 and try saving to DB (best-effort)
-      try {
-        const arrayBuffer = await blob.arrayBuffer();
-        let binary = '';
-        const bytes = new Uint8Array(arrayBuffer);
-        const chunkSize = 0x8000;
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          const chunk = bytes.subarray(i, i + chunkSize);
-          binary += String.fromCharCode.apply(null, Array.prototype.slice.call(chunk));
+      docData(userDoc).pipe(take(1)).subscribe(async (u: any) => {
+        if (!u) {
+          this.message = 'Utente non trovato.';
+          return;
         }
-        const base64 = btoa(binary);
 
-        // Update the user's cards array with the new pdfBase64
+        const cards = Array.isArray(u.cards) ? u.cards : [];
+        const card = cards[cardIndex];
+        if (!card) {
+          this.message = 'Scheda non trovata.';
+          return;
+        }
+
+        // If pdfBase64 already present open it
+        if (card.pdfBase64 && card.pdfBase64.length > 0) {
+          try {
+            const byteCharacters = atob(card.pdfBase64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            // Navigate to the blob URL in the current tab
+            window.location.assign(url);
+            this.message = 'Aperto il PDF.';
+            return;
+          } catch (err) {
+            console.error('Errore apertura PDF da base64', err);
+          }
+        }
+
+        // else try to build and save the PDF then open it
         try {
-          // Ensure signed in before attempting to write
-          await this.authService.ensureSignedIn();
-          const updatedCards = Array.isArray(user.cards) ? [...user.cards] : [];
-          updatedCards[cardIndex] = { ...updatedCards[cardIndex], pdfBase64: base64 };
-          await updateDoc(userDocRef, { cards: updatedCards });
-        } catch (e) {
-          // ignore write errors
-          console.warn('Impossibile salvare PDF nel DB (permessi mancanti?):', e);
+          await this.pdfSchedaService.buildAndSavePdf(card, { ...u, id: userId });
+          // Re-fetch once to obtain the saved pdfBase64
+          docData(userDoc).pipe(take(1)).subscribe((refreshed: any) => {
+            const refreshedCard = Array.isArray(refreshed?.cards) ? refreshed.cards[cardIndex] : null;
+            if (refreshedCard?.pdfBase64) {
+              try {
+                const bc = atob(refreshedCard.pdfBase64);
+                const bn = new Array(bc.length);
+                for (let i = 0; i < bc.length; i++) bn[i] = bc.charCodeAt(i);
+                const ba = new Uint8Array(bn);
+                const b = new Blob([ba], { type: 'application/pdf' });
+                const uurl = URL.createObjectURL(b);
+                window.open(uurl, '_blank');
+                setTimeout(() => URL.revokeObjectURL(uurl), 60_000);
+                this.message = 'Aperto il PDF in una nuova scheda.';
+                return;
+              } catch (err) {
+                console.error('Errore apertura PDF dopo build', err);
+              }
+            }
+            this.message = 'PDF generato ma non disponibile per l’apertura.';
+          });
+        } catch (err) {
+          console.error('Errore durante la generazione del PDF pubblico', err);
+          this.message = 'Errore durante la generazione del PDF.';
         }
-      } catch (e) {
-        console.warn('Impossibile convertire PDF in base64:', e);
+      }, err => {
+        console.error('Errore lettura utente', err);
+        // Detect permission errors and give clearer message
+        if (err && err.code === 'permission-denied') {
+          this.message = 'Questa scheda non è pubblica. Se sei il proprietario, effettua il login e usa il pannello di condivisione per "Rendi pubblica".';
+        } else {
+          this.message = 'Errore accesso dati utente.';
+        }
+      });
+    }, err => {
+      console.error('Errore lettura publicCards', err);
+      // If public access blocked or not found, fallback to user doc (handled above)
+      // But show a helpful message if permission denied
+      if (err && err.code === 'permission-denied') {
+        // continue to fallback but inform user
+        this.message = 'La scheda non è pubblica. Se sei il proprietario, usa il pannello di condivisione per pubblicarla.';
       }
-    } catch (e) {
-      console.error('Errore caricamento dati:', e);
-      this.setError('Errore di caricamento dati.');
-    }
-  }
-
-  private setError(msg: string): void {
-    this.loading = false;
-    this.error = msg;
+    });
   }
 }

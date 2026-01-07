@@ -1,7 +1,4 @@
-<div *ngIf="loading">
-  <p style="text-align:center;">Caricamento PDF in corso...</p>
-</div>
-
-<div *ngIf="!loading && error" class="error-message" style="text-align:center;color:#b71c1c;font-weight:500;">
-  {{ error }}
+<div class="public-pdf">
+  <p>{{ message }}</p>
+  <p *ngIf="message.includes('pubblica')">Se sei il proprietario, effettua il login e rendi pubblica la scheda dalla pagina di condivisione.</p>
 </div>

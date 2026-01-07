@@ -1,15 +1,22 @@
-<!-- Vista privata: shell completa -->
-<ng-container *ngIf="!isPublic; else publicView">
-  <app-header></app-header>
-  <div class="app-shell">
-    <app-sidebar></app-sidebar>
-    <main class="app-main">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
+<!-- Vista login: solo il form di login -->
+<ng-container *ngIf="!isLoggedIn && !isPublic; else loggedInView">
+  <router-outlet></router-outlet>
 </ng-container>
 
-<!-- Vista pubblica: SOLO il contenuto della route -->
-<ng-template #publicView>
-  <router-outlet></router-outlet>
+<!-- Vista privata: shell completa -->
+<ng-template #loggedInView>
+  <ng-container *ngIf="!isPublic; else publicView">
+    <app-header></app-header>
+    <div class="app-shell">
+      <app-sidebar></app-sidebar>
+      <main class="app-main">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </ng-container>
+
+  <!-- Vista pubblica: SOLO il contenuto della route -->
+  <ng-template #publicView>
+    <router-outlet></router-outlet>
+  </ng-template>
 </ng-template>

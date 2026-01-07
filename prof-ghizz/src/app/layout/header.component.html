@@ -4,5 +4,11 @@
   <nav class="header-actions">
     <!-- Solo la versione visibile -->
     <span class="version-badge">v{{ appVersion }}</span>
+    
+    <!-- Pulsante Logout -->
+    <button class="logout-btn" (click)="logout()" title="Esci dal sistema" aria-label="Logout">
+      <span class="material-icons">logout</span>
+      <span class="logout-text">Esci</span>
+    </button>
   </nav>
 </header>

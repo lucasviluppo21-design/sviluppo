@@ -1,2 +1,2 @@
-/* Minimal styles for public pdf redirect page */
-.error-message{margin-top:24px}
+.public-pdf{padding:24px;text-align:center}
+.public-pdf p{margin:8px 0;color:#333}

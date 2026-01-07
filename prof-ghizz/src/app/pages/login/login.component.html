@@ -1,0 +1,75 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Prof Ghizz</h1>
+      <p>Sistema di Gestione Fitness</p>
+    </div>
+
+    <form (ngSubmit)="login()" class="login-form" autocomplete="off">
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="Inserisci la tua email"
+          required
+          autocomplete="off"
+          [disabled]="loading"
+        />
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-input-wrapper">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="Inserisci la tua password"
+            required
+            autocomplete="off"
+            [disabled]="loading"
+            (keypress)="onKeyPress($event)"
+          />
+          <button
+            type="button"
+            class="toggle-password-btn"
+            (click)="togglePasswordVisibility()"
+            [disabled]="loading"
+            title="Mostra/nascondi password"
+          >
+            <span class="material-icons">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messaggio di errore -->
+      <div *ngIf="error" class="error-message">
+        <span class="material-icons error-icon">error</span>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Pulsante Login -->
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="loading"
+      >
+        <span *ngIf="!loading">Accedi</span>
+        <span *ngIf="loading" class="loading-spinner">
+          <span class="spinner"></span>
+          Accesso in corso...
+        </span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>© 2026 Prof Ghizz - Tutti i diritti riservati</p>
+    </div>
+  </div>
+</div>

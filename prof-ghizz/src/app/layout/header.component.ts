@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -9,4 +10,10 @@ import { environment } from '../../environments/environment';
 })
 export class HeaderComponent {
   appVersion = environment.version;
+
+  constructor(private authService: AuthService) {}
+
+  logout(): void {
+    this.authService.logout();
+  }
 }

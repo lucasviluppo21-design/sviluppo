@@ -13,6 +13,7 @@ import { AnagraficaComponent } from './pages/anagrafica/anagrafica.component';
 import { AnagraficaListComponent } from './pages/anagrafica-list/anagrafica-list.component';
 import { AnagraficaDetailComponent } from './pages/anagrafica-detail/anagrafica-detail.component';
 import { GestioneSchedeComponent } from './pages/gestione-schede/gestione-schede.component';
+import { LoginComponent } from './pages/login/login.component';
 
 // Standalone components (li metti solo negli imports se sono standalone: true)
  import { EserciziComponent } from './pages/esercizi/esercizi.component';
@@ -46,6 +47,7 @@ import { QRCodeComponent } from 'angularx-qrcode';
     AnagraficaListComponent,
     AnagraficaDetailComponent,
     GestioneSchedeComponent,
+    LoginComponent,
     // NON mettere componenti standalone qui
   ],
   imports: [

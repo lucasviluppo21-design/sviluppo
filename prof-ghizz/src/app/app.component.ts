@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -11,11 +12,21 @@ import { filter } from 'rxjs/operators';
 })
 export class AppComponent implements OnInit, OnDestroy {
   isPublic = false;
+  isLoggedIn = false;
   private sub?: Subscription;
+  private authSub?: Subscription;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private afAuth: AngularFireAuth
+  ) {}
 
   ngOnInit(): void {
+    // Controlla stato login
+    this.authSub = this.afAuth.authState.subscribe(user => {
+      this.isLoggedIn = !!user;
+    });
+
     // stato iniziale (deep link diretto)
     this.isPublic = this.router.url.includes('/public-pdf/');
 
@@ -29,5 +40,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.authSub?.unsubscribe();
   }
 }

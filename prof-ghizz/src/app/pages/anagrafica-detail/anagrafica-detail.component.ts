@@ -6,7 +6,6 @@ import { Firestore, doc, docData, updateDoc, deleteDoc } from '@angular/fire/fir
 import { AuthService } from '../../services/auth.service';
 import { User, WorkoutCard } from '../../models/user.model';
 import { ImageService } from '../../services/image.service';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-anagrafica-detail',
@@ -19,20 +18,19 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
   private imageService = inject(ImageService);
 
   user?: User;
+  userId = '';
+  nome = '';
+  cognome = '';
   showEditModal = false;
   showDeleteModal = false;
   editForm: Partial<User & { avatarFile?: File }> = {};
-  nome = '';
-  cognome = '';
-  userId: string = '';
+  avatarLoading = false;
   userSub?: Subscription;
-  avatarLoading: boolean = false;
-
-  filterExpiredOnly: boolean = false;
   today: string = new Date().toISOString().substring(0, 10);
-
-  // Condivisione inline per singola scheda
-  shareOpenIndex: number | null = null;
+  filterExpiredOnly = false;
+  showShareMenu = false;
+  publicShareUrl = "";
+  selectedCardIndex: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -44,11 +42,7 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const idFromRoute = params.get('id');
-      if (!idFromRoute) {
-        this.userId = '';
-        this.user = undefined;
-        return;
-      }
+      if (!idFromRoute) return;
       this.userId = idFromRoute;
       this.getUser();
     });
@@ -59,17 +53,14 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
   }
 
   getUser() {
-    if (!this.userId) {
-      this.user = undefined;
-      return;
-    }
+    if (!this.userId) return;
     const userDoc = doc(this.firestore, `users/${this.userId}`);
     this.userSub?.unsubscribe();
     this.userSub = docData(userDoc).subscribe(u => {
       if (!u) return;
       const asUser = { ...u, id: this.userId } as User;
       if (Array.isArray(asUser.cards)) {
-        asUser.cards = (asUser.cards as WorkoutCard[]).sort((a: WorkoutCard, b: WorkoutCard) => {
+        asUser.cards = (asUser.cards as WorkoutCard[]).sort((a, b) => {
           const aDate = this.parseItDateTime(a.date, a.time);
           const bDate = this.parseItDateTime(b.date, b.time);
           return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
@@ -83,19 +74,13 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
     if (!d) return;
     const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (!m) return;
-    const dd = Number(m[1]);
-    const mm = Number(m[2]) - 1;
-    const yyyy = Number(m[3]);
-    let hh = 0, min = 0, ss = 0;
+    const dd = Number(m[1]), mm = Number(m[2]) - 1, yyyy = Number(m[3]);
+    let hh = 0, min = 0;
     if (t) {
-      const tm = t.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
-      if (tm) {
-        hh = Number(tm[1]);
-        min = Number(tm[2]);
-        ss = tm[3] ? Number(tm[3]) : 0;
-      }
+      const tm = t.match(/^(\d{2}):(\d{2})/);
+      if (tm) { hh = Number(tm[1]); min = Number(tm[2]); }
     }
-    return new Date(yyyy, mm, dd, hh, min, ss);
+    return new Date(yyyy, mm, dd, hh, min);
   }
 
   isExpired(subscriptionEnd?: string): boolean {
@@ -109,221 +94,92 @@ export class AnagraficaDetailComponent implements OnInit, OnDestroy {
       await this.authService.ensureSignedIn();
       const userDocRef = doc(this.firestore, `users/${this.user.id}`);
       await updateDoc(userDocRef, { subscriptionEnd: newDate || '' });
-      this.user = { ...this.user, subscriptionEnd: newDate || '' };
     } catch (err) {
-      console.error('Errore aggiornamento scadenza', err);
-      alert('Errore durante l’aggiornamento della scadenza.');
+      alert('Errore durante l’aggiornamento.');
     }
   }
 
   async deleteCard(cardIndex: number) {
     if (!this.user || !this.user.id) return;
-    const cards = Array.isArray(this.user.cards) ? [...this.user.cards] : [];
+    const cards = [...(this.user.cards || [])];
     cards.splice(cardIndex, 1);
-
     const userDoc = doc(this.firestore, `users/${this.user.id}`);
     try {
       await this.authService.ensureSignedIn();
       await updateDoc(userDoc, { cards });
-      this.user.cards = cards;
-    } catch (err) {
-      console.error('Error deleting card', err);
-    }
-    this.getUser();
+    } catch {}
   }
 
+  // MODAL EDIT/DELETE
   openEditModal(): void {
-    if (!this.user || !this.user.id) return;
-    this.editForm = {
-      ...this.user,
-      avatarFile: undefined
-    };
+    if (!this.user) return;
+    this.editForm = { ...this.user };
     const parts = (this.user.name || '').trim().split(' ');
     this.nome = parts[0] || '';
     this.cognome = parts.slice(1).join(' ') || '';
     this.showEditModal = true;
   }
-
-  closeEditModal(): void {
-    this.showEditModal = false;
-    this.editForm = {};
-    this.nome = '';
-    this.cognome = '';
-    this.avatarLoading = false;
-  }
+  closeEditModal(): void { this.showEditModal = false; }
 
   async onAvatarChange(event: any): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || !input.files[0]) return;
-    const file = input.files[0];
+    const file = event.target.files?.[0];
+    if (!file) return;
     this.avatarLoading = true;
-    this.editForm.avatarFile = file;
-    const base64 = await this.imageService.compressAndConvertToBase64(file, 1000, 256) as unknown as string;
+    const base64 = await this.imageService.compressAndConvertToBase64(file, 1000, 256) as any;
     this.editForm.avatarUrl = base64;
     this.avatarLoading = false;
   }
 
-  triggerAvatarInput(input: HTMLInputElement): void {
-    input.click();
-  }
+  triggerAvatarInput(input: HTMLInputElement): void { input.click(); }
 
   async saveEditModal(): Promise<void> {
-    if (!this.user || !this.user.id) {
-      alert('ID utente mancante, impossibile aggiornare!');
-      return;
-    }
-    const fullName = `${this.nome || ''} ${this.cognome || ''}`.trim();
-    if (!fullName || !this.editForm.email) {
-      alert('Compila almeno Nome, Cognome ed Email.');
-      return;
-    }
+    if (!this.user?.id) return;
+    const fullName = `${this.nome} ${this.cognome}`.trim();
     const updated: Partial<User> = {
-      name: fullName,
-      email: this.editForm.email ?? '',
-      phone: this.editForm.phone ?? '',
-      birthDate: this.editForm.birthDate ?? '',
-      gender: this.editForm.gender ?? '',
-      address: this.editForm.address ?? '',
-      city: this.editForm.city ?? '',
-      provincia: this.editForm.provincia ?? '',
-      cap: this.editForm.cap ?? '',
-      personalNotes: this.editForm.personalNotes ?? '',
-      subscriptionEnd: this.editForm.subscriptionEnd ?? '',
-      avatarUrl: this.editForm.avatarUrl ?? this.user.avatarUrl ?? '',
-      signupDate: this.user.signupDate ?? '',
-      status: this.editForm.status ?? this.user.status ?? '',
-      cards: this.user.cards ?? []
+      ...this.editForm,
+      name: fullName
     };
-    const userDoc = doc(this.firestore, `users/${this.user.id}`);
+    delete (updated as any).avatarFile;
     try {
       await this.authService.ensureSignedIn();
-      await updateDoc(userDoc, updated);
-      this.user = { ...this.user, ...updated };
-    } catch (err) {
-      console.error('Error updating user', err);
-      alert('Errore aggiornamento utente. Riprova.');
-    }
-    this.closeEditModal();
+      await updateDoc(doc(this.firestore, `users/${this.user.id}`), updated);
+      this.closeEditModal();
+    } catch { alert('Errore aggiornamento.'); }
   }
 
   async printCard(index: number): Promise<void> {
-    if (!this.user || !this.user.cards || !this.user.cards[index]) return;
+    if (!this.user?.cards?.[index]) return;
     const card = this.user.cards[index] as WorkoutCard;
-
-    if (card.pdfBase64 && card.pdfBase64.length > 0) {
-      try {
-        const byteCharacters = atob(card.pdfBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        return;
-      } catch (err) {
-        console.error('Errore apertura PDF da base64, fallback al builder', err);
-      }
+    if (card.pdfBase64) {
+      const byteCharacters = atob(card.pdfBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+      window.open(URL.createObjectURL(blob), '_blank');
+      return;
     }
-
     try {
       await this.pdfSchedaService.buildAndSavePdf(card, this.user);
-    } catch (err) {
-      console.error('Errore durante la stampa della scheda', err);
-      alert('Errore durante la stampa della scheda');
-    }
-  }
-
-  getShareUrl(index: number): string {
-    const path = `/public-pdf/${this.user?.id ?? ''}/${index}`;
-
-    // If a public base URL is configured in environment, use it (recommended for deployments)
-    if (environment.publicBaseUrl && environment.publicBaseUrl.trim()) {
-      return `${environment.publicBaseUrl.replace(/\/$/, '')}${path}`;
-    }
-
-    // Fallback: avoid returning GitHub repo UI URLs when the app is viewed from GitHub
-    const hostname = location.hostname || '';
-    const basePath = location.pathname.replace(/\/$/, '');
-    if (hostname.includes('github.com') || hostname.includes('raw.githubusercontent.com')) {
-      // Return a path without the GitHub origin to avoid sharing links that require GitHub auth
-      return `${basePath}#${path}`; // e.g. /sviluppo#/public-pdf/..../..
-    }
-
-    // Default behaviour: use current origin+path (works when app is hosted under a proper domain)
-    return `${location.origin}${basePath}#${path}`;
-  }
-
-  copyShareUrl(index: number): void {
-    navigator.clipboard.writeText(this.getShareUrl(index)).catch(() => {});
-  }
-
-  shareByEmail(index: number): void {
-    const subject = encodeURIComponent('La tua scheda di allenamento');
-    const body = encodeURIComponent(`Ecco la tua scheda:\n${this.getShareUrl(index)}`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-  }
-
-  shareOnWhatsApp(index: number): void {
-    const message = encodeURIComponent(`La tua scheda di allenamento:\n${this.getShareUrl(index)}`);
-    window.open(`https://wa.me/?text=${message}`, '_blank');
-  }
-
-  shareOnTelegram(index: number): void {
-    const url = encodeURIComponent(this.getShareUrl(index));
-    const text = encodeURIComponent('La tua scheda di allenamento');
-    window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
-  }
-
-  async shareNative(index: number): Promise<void> {
-    const url = this.getShareUrl(index);
-    const title = 'Scheda di allenamento';
-    const text = `Ciao! Ecco la tua scheda di allenamento.\n${url}`;
-    if ((navigator as any).share) {
-      try {
-        await (navigator as any).share({ title, text, url });
-      } catch {}
-    } else {
-      this.toggleShare(index);
-    }
-  }
-
-  openWhatsAppWithMessage(): void {
-    if (!this.user?.phone) return;
-    const phone = this.user.phone.replace(/\D/g, '');
-    const text = encodeURIComponent('Ciao! Ti invio i riferimenti della tua scheda di allenamento.');
-    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-  }
-
-  toggleShare(index: number): void {
-    if (this.shareOpenIndex === index) this.shareOpenIndex = null;
-    else this.shareOpenIndex = index;
+    } catch { alert('Errore stampa PDF'); }
   }
 
   get filteredCards(): WorkoutCard[] {
-    if (!this.user?.cards) return [];
-    if (!this.filterExpiredOnly) return this.user.cards as WorkoutCard[];
-    return (this.user.cards as WorkoutCard[]).filter(card => card.abbonamentoEndDate && card.abbonamentoEndDate <= this.today);
+    return (this.user?.cards as WorkoutCard[]) || [];
   }
 
   async deleteUserCustom(): Promise<void> {
     if (!this.user?.id) return;
-    const userDoc = doc(this.firestore, `users/${this.user.id}`);
     try {
       await this.authService.ensureSignedIn();
-      await deleteDoc(userDoc);
+      await deleteDoc(doc(this.firestore, `users/${this.user.id}`));
       this.router.navigate(['/anagrafica/list']);
-    } catch (err) {
-      console.error('Errore eliminazione utente', err);
-    }
+    } catch {}
   }
 
-  openDeleteModal(): void {
-    this.showDeleteModal = true;
-  }
-  closeDeleteModal(): void {
-    this.showDeleteModal = false;
-  }
+  openDeleteModal(): void { this.showDeleteModal = true; }
+  closeDeleteModal(): void { this.showDeleteModal = false; }
+  
+  
+
+
 }

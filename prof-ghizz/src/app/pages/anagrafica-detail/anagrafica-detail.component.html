@@ -35,7 +35,6 @@
         </div>
       </div>
     </div>
-
     <div class="user-detail-content">
       <div class="user-detail-col">
         <div class="user-detail-section">
@@ -49,7 +48,6 @@
           <div class="personal-info-row"><span>Provincia</span><span>{{ user.provincia || '-' }}</span></div>
           <div class="personal-info-row"><span>CAP</span><span>{{ user.cap || '-' }}</span></div>
         </div>
-
         <div class="user-detail-section">
           <h3>Tessera</h3>
           <div class="personal-info-row">
@@ -64,20 +62,17 @@
             </span>
           </div>
         </div>
-
         <div class="user-detail-section">
           <h3>Note Personali</h3>
           <div class="note-box">{{ user.personalNotes || '' }}</div>
         </div>
       </div>
-
       <div class="user-detail-col user-detail-col-wide">
         <div class="user-detail-section">
           <div class="schede-header">
             <h3>Schede di Allenamento</h3>
             <div class="schede-count" *ngIf="filteredCards.length">Totale: {{ filteredCards.length }}</div>
           </div>
-
           <div class="scheda-box">
             <ng-container *ngIf="filteredCards.length > 0; else schedeVuote">
               <div class="scheda-row" *ngFor="let card of filteredCards; let i = index">
@@ -88,9 +83,6 @@
                   </span>
                 </div>
                 <div class="scheda-actions-inline">
-                  <button class="btn small share" (click)="shareNative(i)" title="Condividi">
-                    <span class="material-icons small-icon">share</span>
-                  </button>
                   <button class="btn small" (click)="printCard(i)" title="Stampa PDF">
                     <span class="material-icons small-icon">print</span>
                   </button>
@@ -98,44 +90,11 @@
                     <span class="material-icons small-icon">delete</span>
                   </button>
                 </div>
-
-                <div class="share-inline" *ngIf="shareOpenIndex === i">
-                  <div class="share-inline-left">
-                    <div class="share-url-row">
-                      <input class="share-url-input" type="text" [value]="getShareUrl(i)" readonly>
-                      <button class="btn tiny" (click)="copyShareUrl(i)">Copia</button>
-                    </div>
-                    <div class="share-buttons-row">
-                      <button class="btn tiny" (click)="shareByEmail(i)" title="Email">
-                        <span class="material-icons">email</span> Email
-                      </button>
-                      <button class="btn tiny" (click)="shareOnWhatsApp(i)" title="WhatsApp">
-                        <span class="material-icons">whatsapp</span> WhatsApp
-                      </button>
-                      <button class="btn tiny" (click)="shareOnTelegram(i)" title="Telegram">
-                        <span class="material-icons">send</span> Telegram
-                      </button>
-                    </div>
-                    <div style="margin-top:8px;">
-                      <a [href]="getShareUrl(i)" target="_blank" rel="noopener">Apri PDF</a>
-                    </div>
-                  </div>
-                  <div class="share-inline-right">
-                    <qrcode
-                      [qrdata]="getShareUrl(i)"
-                      [width]="256"
-                      [errorCorrectionLevel]="'H'"
-                      [elementType]="'img'"
-                      [margin]="2">
-                    </qrcode>
-                    <div class="qr-caption">Scansiona con la fotocamera del telefono</div>
-                  </div>
-                </div>
               </div>
             </ng-container>
             <ng-template #schedeVuote>
               <div class="scheda-empty">
-                Nessuna scheda associata. Salva una scheda dalla pagina Gestione Schede per vederla qui.
+                Nessuna scheda associata.
               </div>
             </ng-template>
           </div>
@@ -161,71 +120,42 @@
         <div class="modal-edit-flex">
           <div class="modal-avatar-box" (click)="triggerAvatarInput(avatarInput)">
             <ng-container *ngIf="editForm.avatarUrl || user?.avatarUrl; else emptyAvatar">
-              <img 
-                [src]="editForm.avatarUrl || user?.avatarUrl"
-                alt="Avatar"
-                class="avatar-img-preview"
-                style="width:72px;height:72px;border-radius:50%;object-fit:cover;cursor:pointer;box-shadow:0 0 8px #eee;">
+              <img [src]="editForm.avatarUrl || user?.avatarUrl" alt="Avatar" class="avatar-img-preview" style="width:72px;height:72px;border-radius:50%;object-fit:cover;cursor:pointer;box-shadow:0 0 8px #eee;">
             </ng-container>
             <ng-template #emptyAvatar>
-              <span 
-                class="material-icons"
-                style="font-size:60px; width:72px; height:72px; border-radius:50%; background:#f4f4f4; color:#9b9b9b; display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">
-                person
-              </span>
+              <span class="material-icons" style="font-size:60px; width:72px; height:72px; border-radius:50%; background:#f4f4f4; color:#9b9b9b; display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">person</span>
             </ng-template>
             <input #avatarInput type="file" accept="image/*" (change)="onAvatarChange($event)" hidden>
           </div>
-          <div *ngIf="avatarLoading" class="avatar-loader" style="margin-left:15px;color:#888;">Caricamento immagine in corso...</div>
+          <div *ngIf="avatarLoading" class="avatar-loader" style="margin-left:15px;color:#888;">Caricamento...</div>
           <div class="modal-fields-note-wrap">
             <div class="modal-fields-grid">
-              <label>Nome
-                <input type="text" [(ngModel)]="nome" name="nome" required>
-              </label>
-              <label>Cognome
-                <input type="text" [(ngModel)]="cognome" name="cognome" required>
-              </label>
-              <label>Email
-                <input type="email" [(ngModel)]="editForm.email" name="email" required>
-              </label>
-              <label>Telefono
-                <input type="text" [(ngModel)]="editForm.phone" name="phone">
-              </label>
-              <label>Data di nascita
-                <input type="date" [(ngModel)]="editForm.birthDate" name="birthDate">
-              </label>
+              <label>Nome <input type="text" [(ngModel)]="nome" name="nome" required></label>
+              <label>Cognome <input type="text" [(ngModel)]="cognome" name="cognome" required></label>
+              <label>Email <input type="email" [(ngModel)]="editForm.email" name="email" required></label>
+              <label>Telefono <input type="text" [(ngModel)]="editForm.phone" name="phone"></label>
+              <label>Data di nascita <input type="date" [(ngModel)]="editForm.birthDate" name="birthDate"></label>
               <label>Genere
                 <select [(ngModel)]="editForm.gender" name="gender">
-                  <option value="">-</option>
-                  <option value="Uomo">Uomo</option>
-                  <option value="Donna">Donna</option>
+                  <option value="">Seleziona...</option>
+                  <option value="Maschio">Maschio</option>
+                  <option value="Femmina">Femmina</option>
                   <option value="Altro">Altro</option>
                 </select>
               </label>
-              <label>Indirizzo
-                <input type="text" [(ngModel)]="editForm.address" name="address">
-              </label>
-              <label>Città
-                <input type="text" [(ngModel)]="editForm.city" name="city">
-              </label>
-              <label>Provincia
-                <input type="text" [(ngModel)]="editForm.provincia" name="provincia">
-              </label>
-              <label>CAP
-                <input type="text" [(ngModel)]="editForm.cap" name="cap">
-              </label>
+              <label>Indirizzo <input type="text" [(ngModel)]="editForm.address" name="address"></label>
+              <label>Città <input type="text" [(ngModel)]="editForm.city" name="city"></label>
+              <label>Provincia <input type="text" [(ngModel)]="editForm.provincia" name="provincia"></label>
+              <label>CAP <input type="text" [(ngModel)]="editForm.cap" name="cap"></label>
               <label>Stato
                 <select [(ngModel)]="editForm.status" name="status">
-                  <option value="">-</option>
                   <option value="Attivo">Attivo</option>
                   <option value="Inattivo">Inattivo</option>
                 </select>
               </label>
             </div>
             <div class="modal-field-note-row">
-              <label>Note personali
-                <textarea [(ngModel)]="editForm.personalNotes" name="personalNotes" rows="4"></textarea>
-              </label>
+              <label>Note personali <textarea [(ngModel)]="editForm.personalNotes" name="personalNotes" rows="4"></textarea></label>
             </div>
           </div>
         </div>
@@ -236,7 +166,6 @@
       </form>
     </div>
   </ng-container>
-  <ng-template #notfound>
-    <p>Utente non trovato</p>
-  </ng-template>
+  <ng-template #notfound><p>Utente non trovato</p></ng-template>
 </div>
+
