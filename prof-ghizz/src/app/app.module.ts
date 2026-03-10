@@ -36,6 +36,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 
 // Modulo QR code (usare sempre il nome QRCodeModule)
 import { QRCodeComponent } from 'angularx-qrcode';
+import { CalendarPlanningComponent } from './pages/calendar-planning/calendar-planning.component';
 
 @NgModule({
   declarations: [
@@ -55,6 +56,10 @@ import { QRCodeComponent } from 'angularx-qrcode';
     CommonModule,
     FormsModule,
     AppRoutingModule,
+    // standalone components
+    CalendarPlanningComponent,
+    EserciziComponent,
+    DettaglioEserciziComponent,
     // QR code module
     QRCodeComponent,
     // AngularFire compat modules

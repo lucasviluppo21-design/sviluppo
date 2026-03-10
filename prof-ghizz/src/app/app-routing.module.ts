@@ -8,6 +8,7 @@ import { AnagraficaDetailComponent } from './pages/anagrafica-detail/anagrafica-
 import { GestioneSchedeComponent } from './pages/gestione-schede/gestione-schede.component';
 import { DettaglioEserciziComponent } from './pages/dettaglio-esercizi/dettaglio-esercizi.component';
 import { LoginComponent } from './pages/login/login.component';
+import { CalendarPlanningComponent } from './pages/calendar-planning/calendar-planning.component';
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
@@ -19,6 +20,7 @@ const routes: Routes = [
   { path: 'anagrafica/list', component: AnagraficaListComponent, canActivate: [AuthGuard] },
   { path: 'anagrafica/:id', component: AnagraficaDetailComponent, canActivate: [AuthGuard] },
   { path: 'gestione-schede', component: GestioneSchedeComponent, canActivate: [AuthGuard] },
+  { path: 'calendar-planning', component: CalendarPlanningComponent, canActivate: [AuthGuard] },
   // lazy load del componente standalone pubblico
   { path: '**', redirectTo: 'login' }
 ];

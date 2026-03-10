@@ -1,0 +1,124 @@
+  <!-- Modale eliminazione -->
+  <div class="modal-bg" *ngIf="showDeleteModal">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Conferma eliminazione</h3>
+      </div>
+      <div class="form-section">
+        <p>Vuoi eliminare questa attività?</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-delete" (click)="confermaElimina()">Elimina</button>
+        <button class="btn-cancel" (click)="annullaElimina()">Annulla</button>
+      </div>
+    </div>
+  </div>
+<div class="app-container">
+  <nav class="top-nav">
+    <div class="nav-left">
+      <button class="btn-ui" (click)="goToToday()">Oggi</button>
+      <div class="date-controls">
+        <button (click)="changeWeek(-1)">❮</button>
+        <span class="month-label">{{ getMonthName() }} {{ selectedYear }}</span>
+        <button (click)="changeWeek(1)">❯</button>
+      </div>
+    </div>
+    <button class="btn-client" (click)="showUserPicker = true" [class.selected]="cliente">
+      <img *ngIf="cliente?.avatarUrl" [src]="cliente.avatarUrl" alt="Cliente">
+      <span *ngIf="!cliente?.avatarUrl">👤</span>
+      {{ cliente ? cliente.name : 'Seleziona Cliente' }}
+    </button>
+  </nav>
+
+  <div class="calendar-viewport">
+    <div class="calendar-grid">
+      <div class="day-column" *ngFor="let g of giorniSettimana">
+        <div class="day-header" [class.is-today]="g.isToday">
+          <div class="day-name">{{ g.nome }}</div>
+          <div class="day-date">{{ g.dataDisplay }}</div>
+        </div>
+        
+        <div class="slots-container">
+          <ng-container *ngFor="let h of hours; let i = index">
+            <ng-container *ngIf="getSlotActivity(g.dataIso, h, filteredActivities$ | async) as ev; else emptySlot">
+              <div class="slot slot-active" (click)="openEvent(ev)">
+                <ng-container *ngIf="isFirstSlotOfActivity(g.dataIso, h, ev)">
+                  <div class="slot-content">
+                    <strong>{{ ev.userName }}</strong><br>
+                    <span>{{ ev.titolo }}</span>
+                    <button class="slot-delete" (click)="eliminaAppuntamento(ev.id, $event)">✕</button>
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+            <ng-template #emptySlot>
+              <div class="slot" (click)="openSlot(g.dataIso, h)">{{ h }}</div>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" *ngIf="showUserPicker" (click)="showUserPicker = false; userSearch = ''; onSearchChange()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Seleziona Cliente</h3>
+        <button (click)="showUserPicker = false">✕</button>
+      </div>
+      <input class="picker-search" type="text" [(ngModel)]="userSearch" (input)="onSearchChange()" placeholder="Cerca...">
+      <div class="picker-list list-users">
+        <div class="user-row picker-item" *ngFor="let u of (filteredUsers$ | async)" (click)="selectUser(u)">
+          <div class="pi-avatar">
+            <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="{{u.name}}">
+            <span *ngIf="!u.avatarUrl">👤</span>
+          </div>
+          <div class="u-info pi-data">
+            <div class="pi-name"><strong>{{ u.name }}</strong></div>
+            <div class="pi-email"><small>{{ u.email }}</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" *ngIf="showActivityPicker" (click)="resetModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Attività</h3>
+        <button (click)="showActivityPicker = false">✕</button>
+      </div>
+      <div class="form">
+        <div class="form-section">
+          <label class="label-client">Cliente</label>
+          <div class="client-display">{{ cliente ? cliente.name : 'Nessun cliente selezionato' }}</div>
+        </div>
+        <div class="form-section">
+          <label>Titolo</label>
+          <input type="text" [(ngModel)]="newAppointment.titolo" placeholder="Es. Riunione, Allenamento...">
+        </div>
+        <div class="form-section">
+          <div class="time-row">
+            <div><label>Inizio</label>
+              <select [(ngModel)]="newAppointment.oraInizio" (change)="onStartChange()"><option *ngFor="let h of hours">{{h}}</option></select>
+            </div>
+            <div><label>Fine</label>
+              <select [(ngModel)]="newAppointment.oraFine"><option *ngFor="let h of hours">{{h}}</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <label>Note</label>
+          <textarea rows="3" [(ngModel)]="newAppointment.note" placeholder="Aggiungi note opzionali..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-save" (click)="salvaAppuntamento()" [disabled]="!cliente || !newAppointment.titolo.trim()">
+            {{ selectedAppointment ? 'Aggiorna' : 'Salva' }}
+          </button>
+          <button class="btn-cancel" (click)="resetModal()">Annulla</button>
+          <button *ngIf="selectedAppointment" class="btn-delete" (click)="eliminaSelected()">Elimina</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
