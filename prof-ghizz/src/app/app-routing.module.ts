@@ -10,6 +10,8 @@ import { DettaglioEserciziComponent } from './pages/dettaglio-esercizi/dettaglio
 import { LoginComponent } from './pages/login/login.component';
 import { CalendarPlanningComponent } from './pages/calendar-planning/calendar-planning.component';
 import { AuthGuard } from './guards/auth.guard';
+import { WorkoutComponent } from './pages/workout/workout.component';
+
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -21,6 +23,7 @@ const routes: Routes = [
   { path: 'anagrafica/:id', component: AnagraficaDetailComponent, canActivate: [AuthGuard] },
   { path: 'gestione-schede', component: GestioneSchedeComponent, canActivate: [AuthGuard] },
   { path: 'calendar-planning', component: CalendarPlanningComponent, canActivate: [AuthGuard] },
+  { path: 'workout', component: WorkoutComponent, canActivate: [AuthGuard] },
   // lazy load del componente standalone pubblico
   { path: '**', redirectTo: 'login' }
 ];

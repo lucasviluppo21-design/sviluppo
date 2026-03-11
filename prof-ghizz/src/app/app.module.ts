@@ -37,6 +37,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 // Modulo QR code (usare sempre il nome QRCodeModule)
 import { QRCodeComponent } from 'angularx-qrcode';
 import { CalendarPlanningComponent } from './pages/calendar-planning/calendar-planning.component';
+import { WorkoutComponent } from './pages/workout/workout.component';
 
 @NgModule({
   declarations: [
@@ -49,6 +50,7 @@ import { CalendarPlanningComponent } from './pages/calendar-planning/calendar-pl
     AnagraficaDetailComponent,
     GestioneSchedeComponent,
     LoginComponent,
+    WorkoutComponent,
     // NON mettere componenti standalone qui
   ],
   imports: [

@@ -20,21 +20,21 @@
     </li>
     <li>
       <a routerLink="/esercizi" routerLinkActive="active" aria-label="Esercizi" title="Esercizi">
-        <!-- new icon: spark / bolt to represent exercises differently (big) -->
-        <svg class="side-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
-          <path d="M13 2L3 14h7l-1 8L21 10h-7l-1-8z" fill="#fff"/>
-        </svg>
-        <span class="sr-only">Esercizi</span>
+     <svg class="side-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
+      <rect x="10" y="2" width="4" height="2" rx="1" fill="#fff"/>
+      <path d="M12 5c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm1 9h-2V9h2v5z" fill="#fff"/>
+      </svg>
+      <span class="sr-only">Esercizi</span>
       </a>
     </li>
     <li>
       <a routerLink="/gestione-schede" routerLinkActive="active" aria-label="Schede" title="Schede">
         <!-- new icon: grid / layers representing a different appearance -->
         <svg class="side-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
-          <rect x="3" y="3" width="8" height="8" fill="#fff"/>
-          <rect x="13" y="3" width="8" height="8" fill="#fff"/>
-          <rect x="3" y="13" width="8" height="8" fill="#fff"/>
-          <rect x="13" y="13" width="8" height="8" fill="#fff"/>
+          <rect x="5" y="5" width="14" height="16" rx="2" fill="#fff"/>
+          <rect x="9" y="3" width="6" height="3" rx="1" fill="#fff"/>
+          <rect x="8" y="9" width="8" height="2" rx="0.5" fill="#333"/> <rect x="8" y="13" width="8" height="2" rx="0.5" fill="#333"/>
+          <rect x="8" y="17" width="5" height="2" rx="0.5" fill="#333"/>
         </svg>
         <span class="sr-only">Schede</span>
       </a>
@@ -49,6 +49,17 @@
           <line x1="17" y1="2" x2="17" y2="6" stroke="#fff" stroke-width="2"/>
         </svg>
         <span class="sr-only">Pianificazione</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/workout" routerLinkActive="active" aria-label="Workout" title="Workout">
+        <!-- workout icon -->
+        <svg class="side-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" focusable="false">
+          <path d="M7 6L3 8.3L3 15.7L7 18V6Z" fill="#fff"/>
+          <path d="M17 6L21 8.3L21 15.7L17 18V6Z" fill="#fff"/>
+          <rect x="7" y="10.5" width="10" height="3" rx="1.5" fill="#fff"/>
+        </svg>
+        <span class="sr-only">Workout</span>
       </a>
     </li>
   </ul>
