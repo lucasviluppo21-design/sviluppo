@@ -41,9 +41,7 @@ ls -la prof-ghizz/dist/prof-ghizz-app
 ls -la prof-ghizz/dist/prof-ghizz-app/browser   # <-- qui deve esserci index.html
 
 # 3) Deploy pulito in docs (copiamo dalla cartella browser/)
-rm -rf docs
-mkdir -p docs
-cp -r prof-ghizz/dist/prof-ghizz-app/browser/* docs/
+rm -rf docs && mkdir -p docs && cp -r prof-ghizz/dist/prof-ghizz-app/browser/* docs/
 
 # 4) SPA fallback (necessario per le rotte Angular su Pages)
 cp docs/index.html docs/404.html
